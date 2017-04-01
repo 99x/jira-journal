@@ -1,0 +1,31 @@
+{
+  "name": "jira-journal",
+  "version": "1.0.0",
+  "description": "Bot that interacts as your bullet journal for JIRA worklogs.",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "start": "node index.js"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/99xt/jira-journal.git"
+  },
+  "keywords": [
+    "bot",
+    "microsoft-bot-framework",
+    "jira-client",
+    "jira-plugin",
+    "microsoft-cognitive-services"
+  ],
+  "author": "kosalap@99x.lk",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/99xt/jira-journal/issues"
+  },
+  "homepage": "https://github.com/99xt/jira-journal#readme",
+  "dependencies": {
+    "botbuilder": "^3.7.0",
+    "restify": "^4.3.0"
+  }
+}
