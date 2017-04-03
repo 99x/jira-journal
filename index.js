@@ -1,6 +1,6 @@
 var restify = require('restify');
 var builder = require('botbuilder');
-var appsettings = require('appsettings');
+var settings = require('./appsettings');
 //=========================================================
 // Bot Setup
 //=========================================================
@@ -10,10 +10,10 @@ server.listen(process.env.port || process.env.PORT || 8081, function () {
     console.log('%s listening to %s', server.name, server.url);
 });
 // Create chat bot
-var connector = new builder.ChatConnector(appsettings.bot);
+var connector = new builder.ChatConnector(settings.bot);
 var bot = new builder.UniversalBot(connector);
 var intents = new builder.IntentDialog();
-server.post('/api/messages', connector.listen());
+server.post('/bot', connector.listen());
 //Bot on
 bot.on('contactRelationUpdate', function (message) {
     if (message.action === 'add') {
@@ -74,7 +74,7 @@ intents.matches(/(?:^|[ ])#([a-zA-Z0-9-]+)/gm, [function (session, args, next) {
             matchedDate = m[0, 1].match(dateRegX);
             if (matchedDate == null) {
                 //Checking whether the given hashtag is a time nnh or nnm or nnd
-                var timeRegX = /^([0-9]{1})\.([0-9]{1})(h)|^([0-9]{2})(m)|^([0-9]{1})(d)|^([0-9]{1})(h)|^([0-9]{1})\.([0-9]{1})(d)/g;
+                var timeRegX = /^([0-9]{2})\.([0-9]{2})(h)|^([0-9]{2})(m)|^([0-9]{1})(d)|^([0-9]{2})(h)|^([0-9]{1})\.([0-9]{1})(d)/g;
                 matchedTime = m[0, 1].match(timeRegX);
                 if (matchedTime == null) {
                     //Checking whether the given hashtag is today
@@ -84,34 +84,29 @@ intents.matches(/(?:^|[ ])#([a-zA-Z0-9-]+)/gm, [function (session, args, next) {
                         var mm = today.getMonth() + 1; //January is 0!
                         console.log(m[0, 1] + " is the task date");
                         TaskDate = dd + "-" + mm;
-                    }
-                    //Checking whether given hashtag is yesterday
-                    else if (m[0, 1].toLowerCase() == "yesterday") {
+                    } else if (m[0, 1].toLowerCase() == "yesterday") {
+                        //Checking whether given hashtag is yesterday
                         var today = new Date();
                         today.setDate(today.getDate() - 1)
                         var dd = today.getDate();
                         var mm = today.getMonth() + 1; //January is 0!
                         console.log(m[0, 1] + " is the task date");
                         TaskDate = dd + "-" + mm;
-                    }
-                    else {
+                    } else {
                         console.log(m[0, 1] + " is not a valid hashtag");
                         session.send(m[0, 1] + " is not a valid hashtag. Get available Hash tags here www.google.com");
                     }
-                }
-                else {
+                } else {
                     console.log(m[0, 1] + " is task time");
                     Tasktime = m[0, 1];
 
                 }
-            }
-            else {
+            } else {
                 console.log(m[0, 1] + " is the task date");
                 TaskDate = m[0, 1];
 
             }
-        }
-        else {
+        } else {
             console.log(m[0, 1] + " is the JIRA Task ID");
             TaskID = m[0, 1];
 
