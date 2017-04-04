@@ -1,71 +1,53 @@
-var https = require("https");
+var request = require("request");
 
 /* public interface */
 
 // returns all issues assigned to the user
-module.exports.getAssignedIssues = function(jiraUrl, credentials, callback) {
-    var pathStub = "search?jql=assignee=" + credentials.username + "&fields=summary";
+module.exports.getAssignedIssues = function (jiraOptions, callback) {
+    var urlStub = "search?jql=assignee=" + jiraOptions.username + "&fields=summary";
+    var options = _getRequestOptions(jiraOptions, urlStub);
 
-    var options = {
-        hostname: jiraUrl,
-        method: "GET",
-        pathStub: pathStub,
-        credentials: credentials
-    };
+    request.get(options, handleResponse);
 
-    var handleSuccess = function (response) {
-        var data = [];
+    function handleResponse(error, response, body) {
+        var issues;
 
-        response.on("data", function (chunk) {
-            data.push(chunk);
-        });
+        if (error) {
+            callback(error);
+        }
+        else if (response.statusCode !== 200) {
+            callback(new Error("Failed with " + response.statusCode));
+        }
+        else {
+            issues = prepareIssues(JSON.parse(body));
+            callback(null, issues);
+        }
 
-        response.on('end', function () {
-            data = JSON.parse(data.join(''));
-
-            callback(prepareIssueList(data));
-        });
-    };
-
-    var request = _createRequest(options, handleSuccess, _handleError);
-    request.end();
-
-    function prepareIssueList(data) {
-        return data.issues.map(function(issue){
-            return {
-                key: issue.key,
-                summary: issue.fields.summary
-            };
-        });
+        function prepareIssues(data) {
+            return data.issues.map(function (issue) {
+                return {
+                    key: issue.key,
+                    summary: issue.fields.summary
+                };
+            });
+        }
     }
 }
 
 /* private methods */
 
-// abstracts creation of HTTP request to the JIRA API
-function _createRequest(options, handleSuccess, handleError) {
-    var authHeaderValue = _createAuthHeaderValue(options.credentials);
+// generates the options object for HTTP requests
+function _getRequestOptions(jiraOptions, urlStub) {
+    var url = jiraOptions.url + "/rest/api/latest/" + urlStub;
 
-    var requestOptions = {
-        hostname: options.hostname,
-        path: "/rest/api/latest/" + options.pathStub,
-        method: options.method,
+    return {
+        url: url,
         headers: {
-            "Content-Type": "application/json",
-            "Authorization": authHeaderValue
+            "Content-Type": "application/json"
+        },
+        auth: {
+            "username": jiraOptions.username,
+            "password": jiraOptions.password
         }
     };
-
-    return https.request(requestOptions, handleSuccess).on('error', handleError);
-}
-
-// generates the authorization header value
-function _createAuthHeaderValue(credentials) {
-    var string = credentials.username + ":" + credentials.password;
-    return "Basic " + Buffer.from(string).toString('base64');
-}
-
-// handles network operation errors
-function _handleError(error) {
-    console.log("Got error: " + error.message);
 }

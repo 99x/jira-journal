@@ -1,12 +1,17 @@
 var jira = require("./jira");
 
-var jiraUrl = "seranet.atlassian.net";
-var credentials = {
-    username: "user",
-    password: "pw"
+var jiraOptions = {
+    url: "https://seranet.atlassian.net",
+    username: "test",
+    password: "test"
 }
 
 // lists all issues assigned to the user
-jira.getAssignedIssues(jiraUrl, credentials, function(issues){
-    console.log(issues);
+jira.getAssignedIssues(jiraOptions, function (error, response) {
+    if (error) {
+        console.log("Something failed");
+    }
+    else {
+        console.log(response);
+    }
 });
