@@ -34,10 +34,27 @@ module.exports.getAssignedIssues = function (jiraOptions, callback) {
     }
 }
 
+// adds a new worklog for an issue
+module.exports.addWorklog = function (jiraOptions, issueKey, worklog, callback) {
+    var urlStub = "issue/" + issueKey + "/worklog";
+    var options = _getRequestOptions(jiraOptions, urlStub, worklog);
+
+    request.post(options, handleResponse);
+
+    function handleResponse(error, response, body) {
+        if (error || response.statusCode !== 201) {
+            error = error || new Error("Failed with " + response.statusCode);
+            return callback(error);
+        }
+
+        callback(null, body.id);
+    }
+}
+
 /* private methods */
 
 // generates the options object for HTTP requests
-function _getRequestOptions(jiraOptions, urlStub) {
+function _getRequestOptions(jiraOptions, urlStub, payload) {
     var url = jiraOptions.url + "/rest/api/latest/" + urlStub;
 
     return {
@@ -48,6 +65,7 @@ function _getRequestOptions(jiraOptions, urlStub) {
         auth: {
             "username": jiraOptions.username,
             "password": jiraOptions.password
-        }
+        },
+        json: payload
     };
 }
