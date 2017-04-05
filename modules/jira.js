@@ -12,16 +12,16 @@ module.exports.getAssignedIssues = function (jiraOptions, callback) {
     function handleResponse(error, response, body) {
         var issues;
 
-        if (error) {
-            callback(error);
+        if (error || response.statusCode !== 200) {
+            if (!error) {
+                error = new Error("Failed with " + response.statusCode);
+            }
+
+            return callback(error);
         }
-        else if (response.statusCode !== 200) {
-            callback(new Error("Failed with " + response.statusCode));
-        }
-        else {
-            issues = prepareIssues(JSON.parse(body));
-            callback(null, issues);
-        }
+
+        issues = prepareIssues(JSON.parse(body));
+        callback(null, issues);
 
         function prepareIssues(data) {
             return data.issues.map(function (issue) {
