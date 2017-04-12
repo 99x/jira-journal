@@ -14,7 +14,7 @@ const connector = new builder.ChatConnector({
 const bot = new builder.UniversalBot(connector);
 
 //Bot on
-bot.on('contactRelationUpdate', function (message) {
+bot.on('contactRelationUpdate', (message) => {
     if (message.action === 'add') {
 
         let name = message.user ? message.user.name : 'there';
@@ -26,16 +26,18 @@ bot.on('contactRelationUpdate', function (message) {
         // delete their data
     }
 });
-bot.on('typing', function (message) {
+bot.on('typing', (message) => {
     // User is typing
 });
-bot.on('deleteUserData', function (message) {
+bot.on('deleteUserData', (message) => {
     // User asked to delete their data
 });
 
 //=========================================================
 // Bots Dialogs
 //=========================================================
+
+bot.dialog('/', require('./worklog'));
 
 bot.dialog('support', require('./support'))
     .triggerAction({
@@ -46,7 +48,5 @@ bot.dialog('ping', require('./ping'))
     .triggerAction({
         matches: [/(poke)/i, /ping/i, /are you alive?/i]
     });
-
-bot.dialog('/', require('./worklog'));
 
 module.exports = bot;

@@ -1,5 +1,5 @@
 'use strict';
 
-module.exports = function (session, args, next) {
+module.exports = (session, args, next) => {
     session.endEndDialogWithResult('(poke)');
 };

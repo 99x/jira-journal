@@ -1,8 +1,8 @@
 'use strict';
 
-module.exports = function (session, args, next) {
+module.exports = (session, args, next) => {
     // Generate ticket
-    var tickerNumber = Math.ceil(Math.random() * 20000);
+    let tickerNumber = Math.ceil(Math.random() * 20000);
 
     // Reply and return to parent dialog
     session.send('Your message \'%s\' was registered. Once we resolve it; we will get back to you.', session.message.text);
