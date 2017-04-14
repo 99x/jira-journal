@@ -1,9 +1,5 @@
 'use strict';
 
-//=========================================================
-// Bot Setup
-//=========================================================
-// Create chat bot
 const builder = require('botbuilder');
 
 const connector = new builder.ChatConnector({
@@ -13,7 +9,6 @@ const connector = new builder.ChatConnector({
 
 const bot = new builder.UniversalBot(connector);
 
-//Bot on
 bot.on('contactRelationUpdate', (message) => {
     if (message.action === 'add') {
 
@@ -32,10 +27,6 @@ bot.on('typing', (message) => {
 bot.on('deleteUserData', (message) => {
     // User asked to delete their data
 });
-
-//=========================================================
-// Bots Dialogs
-//=========================================================
 
 bot.dialog('/', require('./worklog'));
 
