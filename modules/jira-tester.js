@@ -16,6 +16,16 @@ jira.getAssignedIssues(jiraOptions, function (error, response) {
     }
 });
 
+// list all issues with a worklog in the past two weeks
+jira.getRecentIssues(jiraOptions, 14, function (error, response) {
+    if (error) {
+        console.log("Something failed");
+    }
+    else {
+        console.log(response);
+    }
+});
+
 // add a new worklog
 jira.addWorklog(jiraOptions, "CIN-27", {
     comment: "I did some work here.",
