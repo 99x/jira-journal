@@ -17,7 +17,7 @@ If you are interested in fixing issues and contributing directly to the code bas
 * [Coding guidelines](https://github.com/99xt/jira-journal/wiki/Coding-Guidelines)
 * [Submitting pull requests](https://github.com/99xt/jira-journal/wiki/How-to-Contribute#pull-requests)
 
-This project has adopted the Open Source Code of Conduct of 99X Technology. For more information contact opensource@99xt.lk with any additional questions and comments.
+This project has adopted the [Open Source Code of Conduct of 99X Technology](https://github.com/99xt/jira-journal/wiki/Code-of-Conduct). For more information contact opensource@99xt.lk with any additional questions and comments.
 
 ## Feedback
 
