@@ -25,9 +25,10 @@
   },
   "homepage": "https://github.com/99xt/jira-journal#readme",
   "dependencies": {
+    "bluebird": "^3.5.0",
     "botbuilder": "^3.7.0",
-    "request": "^2.81.0",
     "dotenv-extended": "^1.0.4",
+    "request": "^2.81.0",
     "restify": "^4.3.0"
   }
 }
