@@ -2,14 +2,24 @@
 
 const builder = require('botbuilder');
 
-const connector = new builder.ChatConnector({
+const logger = require('./logger');
+const journal = require('./journal');
+const help = require('./help');
+const signin = require('./signin');
+const reset = require('./reset');
+
+const chatsettings = {
     appId: process.env.MICROSOFT_APP_ID,
     appPassword: process.env.MICROSOFT_APP_PASSWORD
-});
+};
+
+const connector = new builder.ChatConnector(chatsettings);
 
 const bot = new builder.UniversalBot(connector);
 
 bot.set('persistConversationData', true);
+
+bot.use(logger);
 
 bot.on('contactRelationUpdate', (message) => {
 
@@ -42,19 +52,29 @@ bot.on('deleteUserData', (message) => {
     // User asked to delete their data
 });
 
-bot.dialog('/', require('./journal'));
+bot.dialog('/', journal);
 
-bot.dialog('/help', require('./help'))
+bot.dialog('/history', journal)
+    .triggerAction({
+        matches: [/^recent|history/i]
+    });
+
+bot.dialog('/assigned', journal)
+    .triggerAction({
+        matches: [/^assigned|my tasks|my jira tasks|assigned to me/i]
+    });
+
+bot.dialog('/help', help)
     .triggerAction({
         matches: [/^help|yelp|how to?/i]
     });
 
-bot.dialog('/signin', require('./signin'))
+bot.dialog('/signin', signin)
     .triggerAction({
         matches: [/^sign in|let me in/i]
     });
 
-bot.dialog('/reset', require('./reset'))
+bot.dialog('/reset', reset)
     .triggerAction({
         matches: [/^reset/]
     });
