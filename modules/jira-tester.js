@@ -7,23 +7,17 @@ var jiraOptions = {
 }
 
 // list all issues assigned to the user
-jira.getAssignedIssues(jiraOptions, function (error, response) {
-    if (error) {
-        console.log("Something failed");
-    }
-    else {
-        console.log(response);
-    }
+jira.getAssignedIssues(jiraOptions).then(function (issues) {
+    console.log(issues);
+}).catch(function (error) {
+    console.log("Something failed");
 });
 
 // list all issues with a worklog in the past two weeks
-jira.getRecentIssues(jiraOptions, 14, function (error, response) {
-    if (error) {
-        console.log("Something failed");
-    }
-    else {
-        console.log(response);
-    }
+jira.getRecentIssues(jiraOptions, 14).then(function (issues) {
+    console.log(issues);
+}).catch(function (error) {
+    console.log("Something failed");
 });
 
 // add a new worklog
@@ -31,11 +25,9 @@ jira.addWorklog(jiraOptions, "CIN-27", {
     comment: "I did some work here.",
     started: "2017-04-01T09:01:46.633+0000",
     timeSpent: "1h 30m"
-}, function (error, response) {
-    if (error) {
-        console.log("Something failed");
-    }
-    else {
-        console.log(response);
-    }
+}).then(function (worklogId) {
+    console.log("Successfully added workflow with ID: " + worklogId);
+}).catch(function (error) {
+    console.log("Something failed");
 });
+
