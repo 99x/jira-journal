@@ -15,6 +15,8 @@ module.exports = exports = [(session) => {
     timesheet
         .searchColleagues(results.response)
         .then((colleagues) => {
+            console.log('Found %s', colleagues.length);
+
             session.userData = colleagues[0];
             session.userData.impersonated = true;
         }).catch((ex) => {
@@ -25,8 +27,7 @@ module.exports = exports = [(session) => {
 
 }, (session) => {
 
-    if (!session.impersonated) {
-        console.log('Oops! Couldn\'t impersonate');
+    if (!session.userData.impersonated) {
         return session.endDialog('Oops! Couldn\'t impersonate');
     }
     session.endDialog('(y)');
