@@ -2,14 +2,66 @@
 
 const builder = require('botbuilder');
 const timesheet = require('./timesheet');
+const sendmail = require('./sendmail');
+const secrets = require('./secrets');
 
 module.exports = exports = [(session) => {
 
-    builder.Prompts.text(session, 'Please tell me your domain user?');
+    builder.Prompts.text(session, 'What\'s your company email address?');
 
 }, (session, results, next) => {
 
-    session.send('Ok. Searching for your stuff...');
+    if (results.response && /^/i.test(results.response)) {
+
+        session.dialogData.email = results.response;
+        session.dialogData.secretCode = secrets.whisper();
+
+        next();
+        return;
+    }
+
+    session.endDialog('That\'s not an email address!');
+
+}, (session, results, next) => {
+
+    const email = session.dialogData.email;
+    const secretCode = session.dialogData.secretCode;
+
+    const draft = {
+        from: 'noreply@jirajournal.io',
+        to: email,
+        subject: 'Your Secret Code ' + secretCode,
+        text: 'You just tryed to sign in with JIRA Journal. Here\'s your Secret Code: ' + secretCode,
+        html: 'You just tryed to sign in with JIRA Journal. Here\'s your <b>Secret Code: </b>' + secretCode
+    };
+
+    session.sendTyping();
+
+    sendmail.compose(draft)
+        .then(() => {
+            session.send('Ok. Dropped an email to %s.', results.response);
+            next();
+
+        }).catch((ex) => {
+            console.log(ex);
+            session.endDialog();
+        });
+
+}, (session) => {
+
+    builder.Prompts.text(session, 'What\'s the *secret code* in it?');
+
+}, (session, results, next) => {
+
+    if (results.response && results.response === session.dialogData.secretCode) {
+        next();
+        return;
+    }
+
+    session.endDialog('That\'s not what I sent you! :P');
+
+}, (session, results, next) => {
+
     session.sendTyping();
 
     timesheet
@@ -19,16 +71,20 @@ module.exports = exports = [(session) => {
 
             session.userData = colleagues[0];
             session.userData.impersonated = true;
+            next();
+
         }).catch((ex) => {
             console.log(ex);
-        }).finally(() => {
-            next();
+            session.endDialog();
         });
+},
 
-}, (session) => {
+(session) => {
 
-    if (!session.userData.impersonated) {
-        return session.endDialog('Oops! Couldn\'t impersonate');
+    if (session.userData.impersonated) {
+        session.endDialog('(y)');
+        return;
     }
-    session.endDialog('(y)');
-}];
+    session.endDialog('Oops! Couldn\'t impersonate');
+}
+];  
