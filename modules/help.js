@@ -15,5 +15,5 @@ module.exports = exports = [(session) => {
         .attachmentLayout(builder.AttachmentLayout.list)
         .attachments([card]);
     session.send(reply);
-    session.endDialog('Hi... I\'m the JIRA Journal Bot for time reporting. Thanks for adding me. Say \'help\' to see what I can do!');
+    session.endConversation('Hi... I\'m the JIRA Journal Bot for time reporting. Thanks for adding me. Say \'help\' to see what I can do!');
 }];

@@ -7,5 +7,5 @@ module.exports = exports = [(session) => {
     delete session.userData.projects;
     delete session.privateConversationData.history;
 
-    session.endDialog('Oops! I am suffering from a memory loss...');
+    session.endConversation('Oops! I am suffering from a memory loss...');
 }];
