@@ -16,10 +16,11 @@ const options = {
 const transporter = nodemailer.createTransport(options);
 
 const compose = (email) => {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
         transporter.sendMail(email, (ex, ack) => {
             if (ex) {
                 console.log('Error sending email: %s', ex.message);
+                reject(ex);
             } else {
                 console.log('Email sent: %s', ack.response);
                 resolve(ack.response);
