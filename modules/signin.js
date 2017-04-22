@@ -11,7 +11,7 @@ module.exports = exports = [(session) => {
 
 }, (session, results, next) => {
 
-    if (results.response && /^/i.test(results.response)) {
+    if (results.response && /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i.test(results.response)) {
 
         session.dialogData.email = results.response;
         session.dialogData.secretCode = secrets.whisper();
