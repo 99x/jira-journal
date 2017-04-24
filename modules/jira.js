@@ -3,20 +3,19 @@
 const request = require('request');
 const Promise = require("bluebird");
 
-/* private methods */
-
 // generates the options object for HTTP requests
 function _getRequestOptions(jiraOptions, urlStub, payload) {
-    let url = jiraOptions.url + '/rest/api/latest/' + urlStub;
+    let url = `${jiraOptions.url}/rest/api/latest/${urlStub}`;
+    let { username, password } = jiraOptions;
 
     return {
-        url: url,
+        url,
         headers: {
             'Content-Type': 'application/json'
         },
         auth: {
-            'username': jiraOptions.username,
-            'password': jiraOptions.password
+            username,
+            password
         },
         json: payload
     };
@@ -24,16 +23,18 @@ function _getRequestOptions(jiraOptions, urlStub, payload) {
 
 // flattens the list of issues to a key-summary list
 function _summarizeIssues(data) {
-    return data.issues.map(function (issue) {
+    return data.issues.map((issue) => {
+        let { key, fields: { summary } } = issue;
+
         return {
-            key: issue.key,
-            summary: issue.fields.summary
+            key,
+            summary
         };
     });
 }
 
-function addWorklog(jiraOptions, issueKey, worklog, callback) {
-    let urlStub = 'issue/' + issueKey + '/worklog';
+function _addWorklog(jiraOptions, issueKey, worklog, callback) {
+    let urlStub = `issue/${issueKey}/worklog`;
     let options = _getRequestOptions(jiraOptions, urlStub, worklog);
 
     request.post(options, handleResponse);
@@ -48,15 +49,13 @@ function addWorklog(jiraOptions, issueKey, worklog, callback) {
     }
 }
 
-function getAssignedIssues(jiraOptions, callback) {
-    let urlStub = 'search?jql=assignee=' + jiraOptions.username + '&fields=summary';
+function _getAssignedIssues(jiraOptions, callback) {
+    let urlStub = `search?jql=assignee=${jiraOptions.username}&fields=summary`;
     let options = _getRequestOptions(jiraOptions, urlStub);
 
     request.get(options, handleResponse);
 
     function handleResponse(error, response, body) {
-        let issues;
-
         if (error || response.statusCode !== 200) {
             if (!error) {
                 error = new Error('Failed with ' + response.statusCode);
@@ -65,21 +64,19 @@ function getAssignedIssues(jiraOptions, callback) {
             return callback(error);
         }
 
-        issues = _summarizeIssues(JSON.parse(body));
+        let issues = _summarizeIssues(JSON.parse(body));
         callback(null, issues);
     }
 }
 
-function getRecentIssues(jiraOptions, days, callback) {
-    let urlStub = 'search?jql=worklogAuthor=' + jiraOptions.username +
-        ' AND worklogDate >= -' + days + 'd&fields=summary';
+function _getRecentIssues(jiraOptions, days, callback) {
+    let urlStub = `search?jql=worklogAuthor=${jiraOptions.username}
+     AND worklogDate >= -${days}d&fields=summary`;
     let options = _getRequestOptions(jiraOptions, urlStub);
 
     request.get(options, handleResponse);
 
     function handleResponse(error, response, body) {
-        let issues;
-
         if (error || response.statusCode !== 200) {
             if (!error) {
                 error = new Error('Failed with ' + response.statusCode);
@@ -88,7 +85,7 @@ function getRecentIssues(jiraOptions, days, callback) {
             return callback(error);
         }
 
-        issues = _summarizeIssues(JSON.parse(body));
+        let issues = _summarizeIssues(JSON.parse(body));
         callback(null, issues);
     }
 }
@@ -96,7 +93,7 @@ function getRecentIssues(jiraOptions, days, callback) {
 /* public interface */
 
 module.exports = exports = {
-    addWorklog: Promise.promisify(addWorklog),
-    getAssignedIssues: Promise.promisify(getAssignedIssues),
-    getRecentIssues: Promise.promisify(getRecentIssues)
+    addWorklog: Promise.promisify(_addWorklog),
+    getAssignedIssues: Promise.promisify(_getAssignedIssues),
+    getRecentIssues: Promise.promisify(_getRecentIssues)
 };
