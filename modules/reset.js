@@ -1,11 +1,13 @@
 'use strict';
 
-module.exports = exports = [(session) => {
+module.exports = exports = [
+    (session) => {
 
-    delete session.userData.profile;
-    delete session.userData.impersonated;
-    delete session.userData.projects;
-    delete session.privateConversationData.history;
+        delete session.userData.profile;
+        delete session.userData.impersonated;
+        delete session.userData.projects;
+        delete session.privateConversationData.history;
 
-    session.endConversation('Oops! I am suffering from a memory loss...');
-}];
+        session.endConversation(`Oops! I'm suffering from a memory loss...`);
+    }
+];

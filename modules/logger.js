@@ -1,7 +1,7 @@
 'use strict';
 
 const logConversation = (event) => {
-    console.log('%s: %s', event.address.user.name, event.text);
+    console.log(`${event.address.user.name}: ${event.text}`);
 };
 
 module.exports = exports = {

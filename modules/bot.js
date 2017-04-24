@@ -37,7 +37,7 @@ bot.on('contactRelationUpdate', (message) => {
             .attachments([card]);
         bot.send(reply);
 
-        bot.send('Hi... I\'m the JIRA Journal Bot for time reporting. Thanks for adding me. Say \'help\' to see what I can do');
+        bot.send(`Hi... I'm the JIRA Journal Bot for time reporting. Thanks for adding me. Say 'help' to see what I can do`);
 
     } else {
         // delete their data

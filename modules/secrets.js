@@ -11,5 +11,5 @@ const whisper = () => {
 };
 
 module.exports = exports = {
-    whisper: whisper
+    whisper
 };

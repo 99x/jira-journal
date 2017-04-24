@@ -19,16 +19,16 @@ const compose = (email) => {
     return new Promise((resolve, reject) => {
         transporter.sendMail(email, (ex, ack) => {
             if (ex) {
-                console.log('Error sending email: %s', ex.message);
-                reject(ex);
-            } else {
-                console.log('Email sent: %s', ack.response);
-                resolve(ack.response);
+                console.log(`Error sending email: ${ex.message}`);
+                return reject(ex);
             }
+
+            console.log(`Email sent: ${ack.response}`);
+            resolve(ack.response);
         });
     });
 };
 
 module.exports = exports = {
-    compose: compose
+    compose
 };
