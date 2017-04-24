@@ -58,13 +58,13 @@ module.exports = exports = [(session, results, next) => {
 
 }, (session, results, next) => {
 
-    const Today = 'Today';
+    const Today = 'today';
     const DateSeparator = '-'
     const SpecificDayExpression = /(^(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01]))/g;
-    const DayExpression = /^today|Today|TODAY|yesterday|Yesterday|YESTERDAY|yday|Yday|YDAY/i;
-    const YesterdayExpression = /^yesterday|Yesterday|YESTERDAY|yday|Yday|YDAY/i;
+    const DayExpression = /^today|yesterday|yday/i;
+    const YesterdayExpression = /^yesterday|yday/i;
 
-    const tagStream = session.privateConversationData.tagStream;
+    const tagStream = session.privateConversationData.tagStream.toLowerCase();
     const days = tagStream.match(SpecificDayExpression) || tagStream.match(DayExpression) || [];
     const now = new Date();
     let logDay;
