@@ -29,7 +29,7 @@ bot.on('contactRelationUpdate', (message) => {
             .title('JIRA Journal Bot')
             .text('Your bullet journal - whatever you want to log.')
             .images([
-                new builder.CardImage().url('http://docs.botframework.com/images/demo_bot_image.png')
+                new builder.CardImage().url('https://github.com/99xt/jira-journal/blob/master/icon.png')
             ]);
         const reply = new builder.Message()
             .address(message.address)

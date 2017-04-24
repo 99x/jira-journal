@@ -8,7 +8,7 @@ module.exports = exports = [(session) => {
         .title('JIRA Journal Bot')
         .text('Your bullet journal - whatever you want to log.')
         .images([
-            builder.CardImage.create(session, 'https://bot-framework.azureedge.net/bot-icons-v1/jira-journal_1kD9TrAk04dW4K92uPBis7Bk2wP1rT3VI6NMBk95Lo7TC3BU.png')
+            builder.CardImage.create(session, 'https://github.com/99xt/jira-journal/blob/master/icon.png')
         ]);
 
     const reply = new builder.Message(session)
