@@ -80,13 +80,13 @@ module.exports = exports = [(session) => {
 
     session.sendTyping();
 
-    timesheet
-        .searchColleagues(email)
-        .then((colleagues) => {
+    timesheet.colleagues
+        .find(email)
+        .then((response) => {
 
-            console.log('Found %s', colleagues.length);
+            console.log('Found %s', response.length);
 
-            session.userData = colleagues[0];
+            session.userData = response;
             session.userData.impersonated = true;
 
             session.endConversation('(y)');

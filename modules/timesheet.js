@@ -2,22 +2,18 @@
 
 const Promise = require('bluebird');
 
+const findColleague = (email) => {
+
+};
+const findTask = (options, taskId) => {
+
+};
+
 module.exports = exports = {
-
-    searchColleagues: (username) => {
-
-        return new Promise((resolve) => {
-
-            setTimeout(() => {
-
-                const colleague = {
-                    profile: {
-                        fullname: ''
-                    },
-                    impersonated: false,
-                };
-                resolve([colleague]);
-            }, 2000);
-        });
+    colleagues: {
+        find: Promise.promisify(findColleague)
+    },
+    tasks: {
+        find: Promise.promisify(findTask)
     }
 };
