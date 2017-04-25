@@ -16,6 +16,7 @@ module.exports = exports = [
             .attachmentLayout(builder.AttachmentLayout.list)
             .attachments([card]);
         session.send(reply);
-        session.endConversation(`Hi... I'm the JIRA Journal Bot for time reporting. Thanks for adding me. Say 'help' to see what I can do!`);
+        const name = session.message.user.name;
+        session.endConversation(`Hey ${name}... I'm the JIRA Journal Bot for time reporting. Thanks for adding me. Say 'help' to see what I can do!`);
     }
 ];

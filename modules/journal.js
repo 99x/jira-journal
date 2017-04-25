@@ -46,7 +46,7 @@ module.exports = exports = [
             }, logTask)
             .then((response) => {
                 if (!response) {
-                    return session.endConversation('Oops! No one from JIRA could found anything related to *${taskId}* (worry)');
+                    return session.endConversation('Oops! No one from JIRA could found anything related to *${logTask}* (worry)');
                 }
 
                 session.privateConversationData.logTask = logTask;
@@ -99,11 +99,11 @@ module.exports = exports = [
         const durations = tagStream.match(DurationExpression) || [];
 
         if (durations.length > 1) {
-            return session.endConversation('Sorry! I don\'t know *how much time* to log (worry)')
+            return session.endConversation(`Sorry! I don't know *how much time* to log (worry)`);
         }
 
         if (durations.length == 0) {
-            session.send('You didn\'t mention how much time to log. I\'m logging this as a *Whole Day*.');
+            session.send(`You didn't mention how much time to log. I'm logging this as a *Whole Day*.`);
         }
         const logDuration = durations[0] || WholeDay;
 
@@ -114,15 +114,17 @@ module.exports = exports = [
     },
     (session, results, next) => {
 
-        const logTask = session.privateConversationData.logTaskInstance;
-        const logDate = session.privateConversationData.logDate;
-        const logDuration = session.privateConversationData.logDuration;
+        const {
+            logTaskInstance,
+            logDate,
+            logDuration
+        } = session.privateConversationData;
         const text = session.message.text;
 
         const options = {
-            url: logTask.url,
-            username: logTask.username,
-            password: logTask.password
+            url: logTaskInstance.url,
+            username: logTaskInstance.username,
+            password: logTaskInstance.password
         };
         const worklog = {
             comment: text,
@@ -130,7 +132,7 @@ module.exports = exports = [
             timeSpent: logDuration
         };
 
-        jira.addWorklog(options, logTask.taskId, worklog)
+        jira.addWorklog(options, logTaskInstance.taskId, worklog)
             .then((response) => {
                 session.endConversation('(y)');
             })
