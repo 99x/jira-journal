@@ -54,7 +54,10 @@ module.exports = exports = [
                 next();
 
             }).catch((ex) => {
-                session.endConversation(`Oops! Couldn't contact JIRA! Shame on us (worry)`);
+                session.replaceDialogWith('/404', {
+                    message: `Oops! Couldn't contact JIRA! Shame on us (worry)`,
+                    exception: ex
+                });
             });
 
     },
@@ -137,7 +140,10 @@ module.exports = exports = [
                 session.endConversation('(y)');
             })
             .catch((ex) => {
-                session.endConversation(`Oops! Couldn't contact JIRA! Shame on us (worry)`);
+                session.replaceDialogWith('/404', {
+                    message: `Oops! Couldn't contact JIRA! Shame on us (worry)`,
+                    exception: ex
+                });
             });
     }
 ];

@@ -3,6 +3,7 @@
 const builder = require('botbuilder');
 
 const logger = require('./logger');
+const notfound = require('./404');
 const journal = require('./journal');
 const help = require('./help');
 const signin = require('./signin');
@@ -53,6 +54,8 @@ bot.on('deleteUserData', (message) => {
 });
 
 bot.dialog('/', journal);
+
+bot.dialog('/404', notfound);
 
 bot.dialog('/history', journal)
     .triggerAction({
