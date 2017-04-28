@@ -1,6 +1,6 @@
-'use strict';
+"use strict";
 
-const request = require('request');
+const request = require("request");
 const Promise = require("bluebird");
 
 // generates the options object for HTTP requests
@@ -11,7 +11,7 @@ function _getRequestOptions(jiraOptions, urlStub, payload) {
     return {
         url,
         headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json"
         },
         auth: {
             username,
@@ -41,7 +41,7 @@ function _addWorklog(jiraOptions, issueKey, worklog, callback) {
 
     function handleResponse(error, response, body) {
         if (error || response.statusCode !== 201) {
-            error = error || new Error('Failed with ' + response.statusCode);
+            error = error || new Error("Failed with " + response.statusCode);
             return callback(error);
         }
 
@@ -58,7 +58,7 @@ function _getAssignedIssues(jiraOptions, callback) {
     function handleResponse(error, response, body) {
         if (error || response.statusCode !== 200) {
             if (!error) {
-                error = new Error('Failed with ' + response.statusCode);
+                error = new Error("Failed with " + response.statusCode);
             }
 
             return callback(error);
@@ -79,7 +79,7 @@ function _getRecentIssues(jiraOptions, days, callback) {
     function handleResponse(error, response, body) {
         if (error || response.statusCode !== 200) {
             if (!error) {
-                error = new Error('Failed with ' + response.statusCode);
+                error = new Error("Failed with " + response.statusCode);
             }
 
             return callback(error);
@@ -89,8 +89,6 @@ function _getRecentIssues(jiraOptions, days, callback) {
         callback(null, issues);
     }
 }
-
-/* public interface */
 
 module.exports = exports = {
     addWorklog: Promise.promisify(_addWorklog),
