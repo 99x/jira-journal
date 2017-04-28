@@ -15,7 +15,7 @@ function validateEmail(email) {
         username = extractUsername(email);
     }
     catch (error) {
-        return handleFailure(error);
+        return _handleFailure(error);
     }
 
     urlStub = `HCM?userId=${username}`;
@@ -30,7 +30,7 @@ function validateEmail(email) {
                 return instance.name;
             })
         };
-    }).catch(handleFailure);
+    }).catch(_handleFailure);
 
     function extractUsername(email) {
         let indexEnd = email.indexOf("@");
@@ -40,19 +40,6 @@ function validateEmail(email) {
         }
 
         return email.substring(0, indexEnd);
-    }
-
-    function handleFailure(error) {
-        let { statusCode } = error, message;
-
-        if (!statusCode) {
-            message = error.message;
-        }
-        else {
-            message = "User not found";
-        }
-
-        return Promise.reject(message);
     }
 }
 
@@ -67,4 +54,18 @@ function _getRequestOptions(urlStub, payload) {
         },
         json: payload
     };
+}
+
+// handles failure of HTTP requests
+function _handleFailure(error) {
+    let { statusCode } = error, message;
+
+    if (!statusCode) {
+        message = error.message;
+    }
+    else {
+        message = `Failed with ${statusCode}`;
+    }
+
+    return Promise.reject(message);
 }
