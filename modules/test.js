@@ -13,14 +13,14 @@ const jiraOptions = {
 jira.getAssignedIssues(jiraOptions).then((issues) => {
     console.log(issues);
 }).catch((error) => {
-    console.log("Something failed");
+    console.log(error);
 });
 
 // list all issues with a worklog in the past two weeks
 jira.getRecentIssues(jiraOptions, 14).then((issues) => {
     console.log(issues);
 }).catch((error) => {
-    console.log("Something failed");
+    console.log(error);
 });
 
 // add a new worklog
@@ -31,7 +31,7 @@ jira.addWorklog(jiraOptions, "CIN-27", {
 }).then((worklogId) => {
     console.log(`Successfully added workflow with ID: ${worklogId}`);
 }).catch((error) => {
-    console.log("Something failed");
+    console.log(error);
 });
 
 // checks if a user email is valid for the current application context
