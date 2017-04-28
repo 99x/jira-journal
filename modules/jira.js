@@ -1,7 +1,49 @@
-'use strict';
+"use strict";
 
-const request = require('request');
-const Promise = require("bluebird");
+const request = require("request-promise-native");
+
+module.exports = exports = {
+    addWorklog,
+    getAssignedIssues,
+    getRecentIssues
+};
+
+// adds a new worklog under a particular issue key
+function addWorklog(jiraOptions, issueKey, worklog, callback) {
+    let urlStub = `issue/${issueKey}/worklog`;
+    let options = _getRequestOptions(jiraOptions, urlStub, worklog);
+
+    return request.post(options).then((response) => {
+        let newWorklogId = response.id;
+
+        return newWorklogId;
+    }).catch(_handleFailure);
+}
+
+// gets the issues that are assigned to a particular user
+function getAssignedIssues(jiraOptions) {
+    let urlStub = `search?jql=assignee=${jiraOptions.username}&fields=summary`;
+    let options = _getRequestOptions(jiraOptions, urlStub);
+
+    return request.get(options).then((response) => {
+        let issues = _summarizeIssues(JSON.parse(response));
+
+        return issues;
+    }).catch(_handleFailure);
+}
+
+// gets the issues that a particular user has recently logged time under
+function getRecentIssues(jiraOptions, days, callback) {
+    let urlStub = `search?jql=worklogAuthor=${jiraOptions.username}
+     AND worklogDate >= -${days}d&fields=summary`;
+    let options = _getRequestOptions(jiraOptions, urlStub);
+
+    return request.get(options).then((response) => {
+        let issues = _summarizeIssues(JSON.parse(response));
+
+        return issues;
+    }).catch(_handleFailure);
+}
 
 // generates the options object for HTTP requests
 function _getRequestOptions(jiraOptions, urlStub, payload) {
@@ -11,7 +53,7 @@ function _getRequestOptions(jiraOptions, urlStub, payload) {
     return {
         url,
         headers: {
-            'Content-Type': 'application/json'
+            "Content-Type": "application/json"
         },
         auth: {
             username,
@@ -33,67 +75,16 @@ function _summarizeIssues(data) {
     });
 }
 
-function _addWorklog(jiraOptions, issueKey, worklog, callback) {
-    let urlStub = `issue/${issueKey}/worklog`;
-    let options = _getRequestOptions(jiraOptions, urlStub, worklog);
+// handles failure of HTTP requests
+function _handleFailure(error) {
+    let { statusCode } = error, message;
 
-    request.post(options, handleResponse);
-
-    function handleResponse(error, response, body) {
-        if (error || response.statusCode !== 201) {
-            error = error || new Error('Failed with ' + response.statusCode);
-            return callback(error);
-        }
-
-        callback(null, body.id);
+    if (!statusCode) {
+        message = error.message;
     }
-}
-
-function _getAssignedIssues(jiraOptions, callback) {
-    let urlStub = `search?jql=assignee=${jiraOptions.username}&fields=summary`;
-    let options = _getRequestOptions(jiraOptions, urlStub);
-
-    request.get(options, handleResponse);
-
-    function handleResponse(error, response, body) {
-        if (error || response.statusCode !== 200) {
-            if (!error) {
-                error = new Error('Failed with ' + response.statusCode);
-            }
-
-            return callback(error);
-        }
-
-        let issues = _summarizeIssues(JSON.parse(body));
-        callback(null, issues);
+    else {
+        message = `Failed with ${statusCode}`;
     }
+
+    return Promise.reject(message);
 }
-
-function _getRecentIssues(jiraOptions, days, callback) {
-    let urlStub = `search?jql=worklogAuthor=${jiraOptions.username}
-     AND worklogDate >= -${days}d&fields=summary`;
-    let options = _getRequestOptions(jiraOptions, urlStub);
-
-    request.get(options, handleResponse);
-
-    function handleResponse(error, response, body) {
-        if (error || response.statusCode !== 200) {
-            if (!error) {
-                error = new Error('Failed with ' + response.statusCode);
-            }
-
-            return callback(error);
-        }
-
-        let issues = _summarizeIssues(JSON.parse(body));
-        callback(null, issues);
-    }
-}
-
-/* public interface */
-
-module.exports = exports = {
-    addWorklog: Promise.promisify(_addWorklog),
-    getAssignedIssues: Promise.promisify(_getAssignedIssues),
-    getRecentIssues: Promise.promisify(_getRecentIssues)
-};
