@@ -1,4 +1,7 @@
+"use strict";
+
 const jira = require("./jira");
+const auth = require("./auth");
 
 const jiraOptions = {
     url: "https://myjira.atlassian.net",
@@ -30,3 +33,10 @@ jira.addWorklog(jiraOptions, "CIN-27", {
 }).catch((error) => {
     console.log("Something failed");
 });
+
+// checks if a user email is valid for the current application context
+auth.validateEmail("user@domain.com").then((response) => {
+    console.log(response);
+}).catch((error) => {
+    console.log(error);
+})
