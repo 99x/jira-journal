@@ -1,7 +1,7 @@
 'use strict';
 
 const builder = require('botbuilder');
-const timesheet = require('./timesheet');
+const seranet = require('./seranet');
 const jira = require('./jira');
 
 module.exports = exports = [
@@ -31,26 +31,27 @@ module.exports = exports = [
 
         const TaskExpression = /\d+-[A-Za-z]+(?!-?[a-zA-Z]{1,10})/g;
 
-        const userToken = session.userData.authToken;
+        const {
+            profile,
+            impersonated
+        } = session.userData;
         const tagStream = session.privateConversationData.tagStream;
         const tasks = tagStream.match(TaskExpression) || [];
 
         if (tasks.length != 1) {
             return session.endConversation(`Sorry! I don't know *which task* to log (worry)`);
         }
-        let [logTask] = tasks;
+        const [logTask] = tasks;
 
-        timesheet.tasks
-            .find({
-                userToken
-            }, logTask)
+        seranet.projects
+            .find(profile, logTask)
             .then((response) => {
                 if (!response) {
                     return session.endConversation('Oops! No one from JIRA could found anything related to *${logTask}* (worry)');
                 }
 
                 session.privateConversationData.logTask = logTask;
-                sessioin.privateConversationData.logTaskInstance = response;
+                sessioin.privateConversationData.logProject = response.project;
                 next();
 
             }).catch((ex) => {
@@ -118,16 +119,17 @@ module.exports = exports = [
     (session, results, next) => {
 
         const {
-            logTaskInstance,
+            logTask,
+            logProject,
             logDate,
             logDuration
         } = session.privateConversationData;
         const text = session.message.text;
 
         const options = {
-            url: logTaskInstance.url,
-            username: logTaskInstance.username,
-            password: logTaskInstance.password
+            url: logProject.url,
+            username: logProject.username,
+            password: logProject.password
         };
         const worklog = {
             comment: text,
@@ -135,7 +137,7 @@ module.exports = exports = [
             timeSpent: logDuration
         };
 
-        jira.addWorklog(options, logTaskInstance.taskId, worklog)
+        jira.addWorklog(options, logTask, worklog)
             .then((response) => {
                 session.endConversation('(y)');
             })

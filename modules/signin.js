@@ -82,22 +82,29 @@ module.exports = exports = [
         next();
 
     },
-    (session) => {
+    (session, results, next) => {
 
         const email = session.privateConversationData.email;
 
         session.sendTyping();
 
-        timesheet.colleagues
-            .find(email)
+        seranet.auth
+            .signin(email)
             .then((response) => {
 
                 console.log(`Found ${response.length}`);
 
-                session.userData = response;
-                session.userData.impersonated = true;
+                session.userData = {
+                    impersonated,
+                    profile,
+                    authToken
+                } = response;
 
-                session.endConversation('(y)');
+                session.privateConversationData = {
+                    projects
+                } = response;
+
+                next();
 
             }).catch((ex) => {
 
@@ -105,7 +112,21 @@ module.exports = exports = [
 
                 session.send('Oops! Something went wrong. Shame on us (facepalm).');
                 session.send(`Sorry! Let's start over.`);
+
                 session.replaceDialog('/signin');
             });
+    },
+    (session) => {
+        const {
+            projects
+        } = session.privateConversationData;
+
+        if (projects.length == 0) {
+            return session.endConversation('Y');
+        }
+        projects.forEach((entity, index) => {
+            // Show the carrosal of projects.
+        });
+        session.endConversation();
     }
 ];
