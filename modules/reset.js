@@ -5,8 +5,7 @@ module.exports = exports = [
 
         delete session.userData.profile;
         delete session.userData.impersonated;
-        delete session.userData.projects;
-        delete session.privateConversationData.history;
+        delete session.userData.authToken;
 
         session.endConversation(`Oops! I'm suffering from a memory loss...`);
     }
