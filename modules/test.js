@@ -1,7 +1,10 @@
 "use strict";
 
+require('dotenv-extended').load();
+
 const jira = require("./jira");
 const auth = require("./auth");
+const sendmail = require('./sendmail');
 
 const jiraOptions = {
     url: "https://myjira.atlassian.net",
@@ -35,8 +38,17 @@ jira.addWorklog(jiraOptions, "CIN-27", {
 });
 
 // checks if a user email is valid for the current application context
-auth.validateEmail("user@domain.com").then((response) => {
+auth.validate("usernameOrEmail").then((response) => {
     console.log(response);
 }).catch((error) => {
     console.log(error);
 })
+
+// check if the email composer works.
+sendmail.compose({
+    from: 'Bot <email@dress>',
+    to: `KP <email@dress>`,
+    subject: `Your Secret Code: BLAAHBLAAH`,
+    text: `You just tryed to sign in with JIRA Journal. Here's your Secret Code: BLAAHBLAAH`,
+    html: `You just tryed to sign in with JIRA Journal. Here's your <b>Secret Code: BLAAHBLAAH</b>`
+});
