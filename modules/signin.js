@@ -2,48 +2,52 @@
 
 const builder = require('botbuilder');
 
-const timesheet = require('./timesheet');
 const sendmail = require('./sendmail');
 const secrets = require('./secrets');
-
-const emailValidator = /^(([^<>()\[\]\.,;:\s@\"]+(\.[^<>()\[\]\.,;:\s@\"]+)*)|(\".+\"))@(([^<>()[\]\.,;:\s@\"]+\.)+[^<>()[\]\.,;:\s@\"]{2,})$/i;
+const auth = require('./auth');
 
 module.exports = exports = [
     (session) => {
 
         const name = session.message.user.name;
-        builder.Prompts.text(session, `What's the company email, ${name}?`);
+        builder.Prompts.text(session, `What's your domain username or office email address, ${name}?`);
 
     },
+
+    (session, results, next) => {
+        const usernameOrEmail = session.privateConversationData.usernameOrEmail = results.response;
+        session.sendTyping();
+
+        auth
+            .validate(usernameOrEmail)
+            .then((response) => {
+
+                session.userData.profile = response.profile;
+                session.privateConversationData.jira = response.instances;
+                next();
+
+            }).catch((ex) => {
+
+                session.send(`Oops! Something went wrong. Shame on us (facepalm). Let's start over.`);
+                session.replaceDialog('/signin');
+            });
+    },
+
     (session, results, next) => {
 
-        const email = results.response;
-        session.privateConversationData.email = email;
-
-        if (!emailValidator.test(email)) {
-            session.send(`${email}'s not an email address! Let's start over.`);
-            return session.replaceDialog('/signin');
-        }
-
-        next();
-
-    },
-    (session) => {
-
         const name = session.message.user.name;
-        const email = session.privateConversationData.email;
-        const secretCode = secrets.whisper();
-        session.privateConversationData.secretCode = secretCode;
+        const email = session.userData.profile.emailAddress;
+        const secretCode = session.privateConversationData.secretCode = secrets.whisper();
 
         const draft = {
-            from: 'Bot <noreply@jirajournal.io>',
+            from: `Bot <${email}>`,
             to: `${name} <${email}>`,
             subject: `Your Secret Code: ${secretCode}`,
             text: `You just tryed to sign in with JIRA Journal. Here's your Secret Code: ${secretCode}`,
             html: `You just tryed to sign in with JIRA Journal. Here's your <b>Secret Code: ${secretCode}</b>`
         };
 
-        console.log(`Email template: ${draft}`);
+        console.log(`Email template: ${draft.from}, ${draft.to}`);
 
         session.sendTyping();
 
@@ -82,51 +86,24 @@ module.exports = exports = [
         next();
 
     },
-    (session, results, next) => {
-
-        const email = session.privateConversationData.email;
-
-        session.sendTyping();
-
-        seranet.auth
-            .signin(email)
-            .then((response) => {
-
-                console.log(`Found ${response.length}`);
-
-                session.userData = {
-                    impersonated,
-                    profile,
-                    authToken
-                } = response;
-
-                session.privateConversationData = {
-                    projects
-                } = response;
-
-                next();
-
-            }).catch((ex) => {
-
-                console.log(`Failed with error: ${ex.message}`);
-
-                session.send('Oops! Something went wrong. Shame on us (facepalm).');
-                session.send(`Sorry! Let's start over.`);
-
-                session.replaceDialog('/signin');
-            });
-    },
     (session) => {
         const {
-            projects
+            jira
         } = session.privateConversationData;
 
-        if (projects.length == 0) {
+        if (jira.length == 0) {
             return session.endConversation('Y');
         }
-        projects.forEach((entity, index) => {
-            // Show the carrosal of projects.
+
+        const cards = jira.map((entity) => {
+            return new builder.HeroCard(session)
+                .title(entity.account)
+                .subtitle(entity.description)
+                .buttons([
+                    builder.CardAction.openUrl(session, entity.url, 'Learn More')
+                ])
         });
-        session.endConversation();
+        const message = new builder.Message(session).attachmentLayout(builder.AttachmentLayout.carousel).attachments(cards);
+        session.endConversation(message);
     }
 ];
