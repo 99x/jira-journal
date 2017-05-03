@@ -1,50 +1,39 @@
-"use strict";
+'use strict';
 
-const request = require("request-promise-native");
-const authApiUrl = "http://localhost:60323/api/";
-
-module.exports = exports = {
-    validateEmail
-};
+const request = require('request-promise-native');
+const authApiUrl = process.env.AUTH_API_URL || 'http://localhost:64480/api';
 
 // cross-checks a user email against the auth database
-function validateEmail(email) {
-    let username, urlStub, options;
+const validate = (usernameOrEmail) => {
+    let urlStub, options;
 
-    try {
-        username = extractUsername(email);
-    }
-    catch (error) {
-        return _handleFailure(error);
-    }
-
-    urlStub = `HCM?userId=${username}`;
-    options = _getRequestOptions(urlStub);
+    urlStub = `/e/username/${usernameOrEmail}`;
+    options = getRequestOptions(urlStub);
 
     return request.post(options).then((response) => {
         response = JSON.parse(response);
 
-        return {
-            username: response.username,
-            instances: response.jira.map((instance) => {
-                return instance.name;
-            })
-        };
-    }).catch(_handleFailure);
+        return response;
 
-    function extractUsername(email) {
-        let indexEnd = email.indexOf("@");
+    }).catch(handleFailure);
+};
 
-        if (indexEnd < 0) {
-            throw new Error("Not a proper email address");
-        }
+const getCredentials = (usernameOrEmail, task) => {
+    let urlStub, options;
+    urlStub = `/e/username/${usernameOrEmail}/jira/task/${task}`;
+    options = getRequestOptions(urlStub);
 
-        return email.substring(0, indexEnd);
-    }
-}
+    return request.post(options)
+        .then((response) => {
+            response = JSON.parse(response);
+
+            return response;
+        })
+        .catch(handleFailure);
+};
 
 // generates the options object for HTTP requests
-function _getRequestOptions(urlStub, payload) {
+const getRequestOptions = (urlStub, payload) => {
     let url = `${authApiUrl}${urlStub}`;
 
     return {
@@ -54,18 +43,24 @@ function _getRequestOptions(urlStub, payload) {
         },
         json: payload
     };
-}
+};
 
 // handles failure of HTTP requests
-function _handleFailure(error) {
-    let { statusCode } = error, message;
+const handleFailure = (error) => {
+    let {
+        statusCode
+    } = error, message;
 
     if (!statusCode) {
         message = error.message;
-    }
-    else {
+    } else {
         message = `Failed with ${statusCode}`;
     }
 
     return Promise.reject(message);
-}
+};
+
+module.exports = exports = {
+    validate,
+    getCredentials
+};
