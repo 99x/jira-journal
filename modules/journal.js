@@ -1,8 +1,8 @@
 'use strict';
 
 const builder = require('botbuilder');
-const seranet = require('./seranet');
 const jira = require('./jira');
+const auth = require('./auth');
 
 module.exports = exports = [
     (session, results, next) => {
@@ -30,21 +30,19 @@ module.exports = exports = [
     (session, results, next) => {
 
         const TaskExpression = /\d+-[A-Za-z]+(?!-?[a-zA-Z]{1,10})/g;
-
         const {
-            profile,
-            impersonated
-        } = session.userData;
-        const tagStream = session.privateConversationData.tagStream;
+            email
+        } = session.userData.profile;
+        const tagStream = session.privateConversationData.tagStream.reverse();
         const tasks = tagStream.match(TaskExpression) || [];
 
         if (tasks.length != 1) {
             return session.endConversation(`Sorry! I don't know *which task* to log (worry)`);
         }
-        const [logTask] = tasks;
+        let [logTask] = tasks;
+        logTask = logTask.reverse();
 
-        seranet.projects
-            .find(profile, logTask)
+        auth.getCredentials(email, logTask)
             .then((response) => {
                 if (!response) {
                     return session.endConversation('Oops! No one from JIRA could found anything related to *${logTask}* (worry)');
@@ -149,3 +147,8 @@ module.exports = exports = [
             });
     }
 ];
+
+// Helper Methods
+String.prototype.reverse = () => {
+    return this.split('').reverse().join('');
+};
