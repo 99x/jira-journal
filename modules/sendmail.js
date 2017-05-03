@@ -1,15 +1,17 @@
 'use strict';
 
-const Promise = require('bluebird');
 const nodemailer = require('nodemailer');
 
 const options = {
-    host: process.env.SMTP_HOST,
-    post: process.env.SMTP_PORT,
-    secure: false,
+    host: 'smtp.office365.com',
+    post: 587,
     auth: {
         user: process.env.SMTP_AUTH_USER,
         pass: process.env.SMTP_AUTH_PASSWORD
+    },
+    secureConnection: false,
+    tls: {
+        ciphers: 'SSLv3'
     }
 };
 
