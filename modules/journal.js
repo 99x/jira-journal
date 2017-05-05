@@ -7,7 +7,7 @@ const auth = require('./auth');
 module.exports = exports = [
     (session, results, next) => {
 
-        const Hash = '';
+        const Hash = '#';
         const EmptyString = '';
         const SingleSpace = ' ';
         const HashtagExpression = /(?:^|[ ])#([a-zA-Z0-9-\.]+)/gm;
@@ -24,23 +24,34 @@ module.exports = exports = [
             .join(SingleSpace)
             .replace(Hash, EmptyString);
 
+        console.log('Hashtags :', session.privateConversationData.tagStream);
+
         next();
 
     },
     (session, results, next) => {
 
         const TaskExpression = /\d+-[A-Za-z]+(?!-?[a-zA-Z]{1,10})/g;
-        const {
-            email
-        } = session.userData.profile;
-        const tagStream = session.privateConversationData.tagStream.reverse();
+        const email = session.userData.profile.emailAddress;
+        const tagStream = session.privateConversationData.tagStream
+            .toString()
+            .split(EmptyString)
+            .reverse()
+            .join(EmptyString);
         const tasks = tagStream.match(TaskExpression) || [];
+
+        console.log('Tasks found:', tagStream, JSON.stringify(tasks));
 
         if (tasks.length != 1) {
             return session.endConversation(`Sorry! I don't know *which task* to log (worry)`);
         }
+
         let [logTask] = tasks;
-        logTask = logTask.reverse();
+        logTask = logTask
+            .toString()
+            .split(EmptyString)
+            .reverse()
+            .join(EmptyString);
 
         auth.getCredentials(email, logTask)
             .then((response) => {
@@ -50,10 +61,11 @@ module.exports = exports = [
 
                 session.privateConversationData.logTask = logTask;
                 sessioin.privateConversationData.logProject = response.project;
+
                 next();
 
             }).catch((ex) => {
-                session.replaceDialogWith('/404', {
+                session.replaceDialog('/404', {
                     message: `Oops! Couldn't contact JIRA! Shame on us (worry)`,
                     exception: ex
                 });
@@ -140,15 +152,10 @@ module.exports = exports = [
                 session.endConversation('(y)');
             })
             .catch((ex) => {
-                session.replaceDialogWith('/404', {
+                session.replaceDialog('/404', {
                     message: `Oops! Couldn't contact JIRA! Shame on us (worry)`,
                     exception: ex
                 });
             });
     }
 ];
-
-// Helper Methods
-String.prototype.reverse = () => {
-    return this.split('').reverse().join('');
-};

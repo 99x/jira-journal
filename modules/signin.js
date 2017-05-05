@@ -11,7 +11,6 @@ module.exports = exports = [
 
         const name = session.message.user.name;
         builder.Prompts.text(session, `What's your domain username or office email address, ${name}?`);
-
     },
 
     (session, results, next) => {
@@ -27,7 +26,7 @@ module.exports = exports = [
                 next();
 
             }).catch((ex) => {
-
+                console.log('Auth Exception: ', JSON.stringify(ex));
                 session.send(`Oops! Something went wrong. Shame on us (facepalm). Let's start over.`);
                 session.replaceDialog('/signin');
             });

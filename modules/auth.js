@@ -1,7 +1,7 @@
 'use strict';
 
 const request = require('request-promise-native');
-const authApiUrl = process.env.AUTH_API_URL || 'http://localhost:64480/api';
+const authApiUrl = process.env.AUTH_API_URL || 'http://localhost:5000/api';
 
 // cross-checks a user email against the auth database
 const validate = (usernameOrEmail) => {
@@ -34,15 +34,18 @@ const getCredentials = (usernameOrEmail, task) => {
 
 // generates the options object for HTTP requests
 const getRequestOptions = (urlStub, payload) => {
-    let url = `${authApiUrl}${urlStub}`;
-
-    return {
+    const url = `${authApiUrl}${urlStub}`;
+    const options = {
         url,
         headers: {
             'Content-Type': 'application/json'
         },
         json: payload
     };
+
+    console.log('Request Options: ', JSON.stringify(options));
+
+    return options;
 };
 
 // handles failure of HTTP requests
@@ -50,7 +53,8 @@ const handleFailure = (error) => {
     let {
         statusCode
     } = error, message;
-
+    console.log('Exception Occured: ', JSON.stringify(arguments));
+    
     if (!statusCode) {
         message = error.message;
     } else {

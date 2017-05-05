@@ -20,6 +20,7 @@ module.exports = exports = [
         //     .attachmentLayout(builder.AttachmentLayout.list)
         //     .attachments([card]);
         // session.send(reply);
+        console.log('Exception Occured:', JSON.stringify(exception));
 
         const name = session.message.user.name;
         session.endConversation(message || `Oops! Something went wrong. Sorry ${name}, we need to start over (wasntme)`);
