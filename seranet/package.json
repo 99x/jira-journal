@@ -1,0 +1,8 @@
+{
+  "name": "jira-journal-seranet",
+  "scripts": {
+    "preinstall": "dotnet restore Workplace.Eureka.Services.csproj",
+    "prestart": "dotnet run",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  }
+}
