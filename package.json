@@ -2,10 +2,10 @@
   "name": "jira-journal",
   "version": "1.0.0",
   "description": "Bot that interacts as your bullet journal for JIRA worklogs.",
-  "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node index.js"
+    "preinstall": "cd bot && npm install",
+    "postinstall": "cd seranet && npm install",
+    "test": "echo \"Error: no test specified\" && exit 1"
   },
   "repository": {
     "type": "git",
@@ -23,14 +23,5 @@
   "bugs": {
     "url": "https://github.com/99xt/jira-journal/issues"
   },
-  "homepage": "https://github.com/99xt/jira-journal#readme",
-  "dependencies": {
-    "botbuilder": "^3.7.0",
-    "dotenv-extended": "^1.0.4",
-    "nodemailer": "^4.0.1",
-    "randomstring": "^1.1.5",
-    "request": "^2.81.0",
-    "request-promise-native": "^1.0.3",
-    "restify": "^4.3.0"
-  }
+  "homepage": "https://github.com/99xt/jira-journal#readme"
 }
