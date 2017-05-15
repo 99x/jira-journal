@@ -34,7 +34,7 @@ namespace Workplace.Eureka.Services
             // Add framework services.
             services
                 .AddOptions()
-                .Configure<SymmetricAlgorithmKey>(Configuration.GetSection("SymmetricAlgorithmKeys.PrivateKey"))
+                .Configure<SymmetricAlgorithmKey>(Configuration.GetSection("SymmetricAlgorithmKeys:PrivateKey"))
                 .AddSingleton<Decrypt>()
                 .AddDbContext<SeranetDb>(options => options.UseSqlServer(Configuration.GetConnectionString("DefaultConnection")))
                 .AddMvcCore()
