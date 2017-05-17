@@ -32,7 +32,8 @@ bot.on('contactRelationUpdate', (message) => {
 
         const card = new builder.HeroCard()
             .title('JIRA Journal Bot')
-            .text('Your bullet journal - whatever you want to log.')
+            .subtitle('Your bullet journal - whatever you want to log.')
+            .text(`Hay ${message.user.name}... I'm the JIRA Journal Bot for time reporting. Thanks for adding me. Say 'help' to see what I can do`)
             .images([
                 new builder.CardImage().url('https://github.com/99xt/jira-journal/blob/master/icon.png')
             ]);
@@ -41,9 +42,6 @@ bot.on('contactRelationUpdate', (message) => {
             .attachmentLayout(builder.AttachmentLayout.list)
             .attachments([card]);
         bot.send(reply);
-
-        bot.send(`Hay ${message.user.name}... I'm the JIRA Journal Bot for time reporting. Thanks for adding me. Say 'help' to see what I can do`);
-
     } else {
         // delete their data
     }
