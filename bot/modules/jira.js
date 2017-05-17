@@ -13,6 +13,8 @@ function addWorklog(jiraOptions, issueKey, worklog, callback) {
     let urlStub = `issue/${issueKey}/worklog`;
     let options = _getRequestOptions(jiraOptions, urlStub, worklog);
 
+    console.log('Add worklog: ', JSON.stringify(options));
+
     return request.post(options).then((response) => {
         let newWorklogId = response.id;
 
@@ -48,7 +50,10 @@ function getRecentIssues(jiraOptions, days, callback) {
 // generates the options object for HTTP requests
 function _getRequestOptions(jiraOptions, urlStub, payload) {
     let url = `${jiraOptions.url}/rest/api/latest/${urlStub}`;
-    let { username, password } = jiraOptions;
+    let {
+        username,
+        password
+    } = jiraOptions;
 
     return {
         url,
@@ -66,7 +71,12 @@ function _getRequestOptions(jiraOptions, urlStub, payload) {
 // flattens the list of issues to a key-summary list
 function _summarizeIssues(data) {
     return data.issues.map((issue) => {
-        let { key, fields: { summary } } = issue;
+        let {
+            key,
+            fields: {
+                summary
+            }
+        } = issue;
 
         return {
             key,
@@ -77,12 +87,13 @@ function _summarizeIssues(data) {
 
 // handles failure of HTTP requests
 function _handleFailure(error) {
-    let { statusCode } = error, message;
+    let {
+        statusCode
+    } = error, message;
 
     if (!statusCode) {
         message = error.message;
-    }
-    else {
+    } else {
         message = `Failed with ${statusCode}`;
     }
 
