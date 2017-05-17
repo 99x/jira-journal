@@ -57,7 +57,7 @@ module.exports = exports = [
         auth.authorize(email, logTask)
             .then((response) => {
                 session.privateConversationData.logTask = logTask;
-                sessioin.privateConversationData.logProject = response.project;
+                session.privateConversationData.logProject = response.project;
 
                 next();
 
