@@ -13,7 +13,7 @@ module.exports = exports = [
 
         const HashtagExpression = /(?:^|[ ])#([a-zA-Z0-9-\.]+)/gm;
 
-        const text = session.message.text;
+        const { text } = session.message;
         const hashtags = text.match(HashtagExpression) || [];
 
         if (hashtags.length == 0) {
@@ -56,6 +56,9 @@ module.exports = exports = [
 
         auth.authorize(email, logTask)
             .then((response) => {
+                
+                console.log('Received Project:', JSON.stringify(response));
+                
                 session.privateConversationData.logTask = logTask;
                 session.privateConversationData.logProject = response.project;
 
@@ -106,7 +109,7 @@ module.exports = exports = [
         const DurationExpression = /^([0-9]{2})\.([0-9]{2})(h)|^([0-9]{2})(m)|^([0-9]{1})(d)|^([0-9]{2})(h)|^([0-9]{1})\.([0-9]{1})(d)/g;
         const WholeDay = '1d';
 
-        const tagStream = session.privateConversationData.tagStream;
+        const { tagStream } = session.privateConversationData;
         const durations = tagStream.match(DurationExpression) || [];
 
         if (durations.length > 1) {
@@ -131,28 +134,53 @@ module.exports = exports = [
             logDate,
             logDuration
         } = session.privateConversationData;
-        const text = session.message.text;
+
+        const { text } = session.message;
 
         const options = {
             url: logProject.url,
             username: logProject.username,
             password: logProject.password
         };
+
         const worklog = {
             comment: text,
             started: logDate,
             timeSpent: logDuration
         };
 
+        console.log('BOT worklog:', JSON.stringify(options));
+
         jira.addWorklog(options, logTask, worklog)
             .then((response) => {
                 session.endConversation('(y)');
             })
             .catch((ex) => {
-                session.replaceDialog('/404', {
-                    message: `Oops! Couldn't contact JIRA! Shame on us (worry)`,
-                    exception: ex
-                });
+                const { statusCode } = ex;
+                const { name } = session.message.user;
+
+                console.log('Error logging work on JIRA:', JSON.stringify(ex));
+
+                switch (statusCode) {
+                    case 401:
+                        session.replaceDialog('/401', {
+                            message: `Oops! Your JIRA credentials no longer working, ${name}`,
+                            exception: ex
+                        });
+                        break;
+
+                    case 404:
+                        session.replaceDialog('/404', {
+                            message: `Oops! Couldn't contact JIRA! Shame on us (worry)`,
+                            exception: ex
+                        });
+                        break;
+
+                    default:
+                        session.endConversation(`Oops! Something went wrong. Shame on us (facepalm). Let's try again in few mins.`);
+                        break;
+                }
+
             });
     }
 ];

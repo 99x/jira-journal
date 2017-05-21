@@ -9,7 +9,7 @@ const auth = require('./auth');
 module.exports = exports = [
     (session) => {
 
-        const name = session.message.user.name;
+        const { name } = session.message.user;
         builder.Prompts.text(session, `What's your domain username or office email address, ${name}?`);
     },
 
@@ -33,19 +33,18 @@ module.exports = exports = [
 
     (session, results, next) => {
 
-        const name = session.message.user.name;
+        const { name } = session.message.user;
         const email = session.userData.profile.emailAddress;
         const secretCode = session.privateConversationData.secretCode = secrets.whisper();
 
         const draft = {
-            from: `Bot <${email}>`,
             to: `${name} <${email}>`,
             subject: `Your Secret Code: ${secretCode}`,
             text: `You just tryed to sign in with JIRA Journal. Here's your Secret Code: ${secretCode}`,
             html: `You just tryed to sign in with JIRA Journal. Here's your <b>Secret Code: ${secretCode}</b>`
         };
 
-        console.log(`Email template: ${draft.from}, ${draft.to}`);
+        console.log(`Email template: ${sendmail.options.auth.user}, ${draft.to}`);
 
         session.sendTyping();
 
@@ -73,7 +72,7 @@ module.exports = exports = [
     },
     (session, results, next) => {
 
-        const secretCode = session.privateConversationData.secretCode;
+        const { secretCode } = session.privateConversationData;
         const confirmCode = results.response;
 
         if (confirmCode !== secretCode) {
@@ -85,9 +84,7 @@ module.exports = exports = [
 
     },
     (session) => {
-        const {
-            jira
-        } = session.privateConversationData;
+        const { jira } = session.privateConversationData;
 
         if (jira.length == 0) {
             return session.endConversation('Y');

@@ -15,8 +15,10 @@ module.exports = exports = [
         const reply = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.list)
             .attachments([card]);
+            
         session.send(reply);
-        const name = session.message.user.name;
+
+        const { name } = session.message.user;
         session.endConversation(`Hey ${name}... I'm the JIRA Journal Bot for time reporting. Thanks for adding me. Say 'help' to see what I can do!`);
     }
 ];
