@@ -74,32 +74,31 @@ module.exports = exports = [
     },
     (session, results, next) => {
 
-        const Today = 'today';
+        const Yesterday = 'yesterday';
         const DateSeparator = '-'
-        const SpecificDayExpression = /(^(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01]))/g;
+        const SpecificDateExpression = /(^(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01]))/g;
         const DayExpression = /^today|yesterday|yday/i;
         const YesterdayExpression = /^yesterday|yday/i;
 
         const tagStream = session.privateConversationData.tagStream.toLowerCase();
-        const days = tagStream.match(SpecificDayExpression) || tagStream.match(DayExpression) || [];
-        const now = new Date();
+        const days = tagStream.match(SpecificDateExpression) || tagStream.match(DayExpression) || [];
+        // const now = new Date();
 
         if (days.length > 1) {
             return session.endConversation(`Sorry! I don't know *which day* to log (worry)`)
         }
 
         if (days.length == 0) {
-            session.send(`You didn't mention which day to log. I'm logging this as *#Today*.`);
+            session.send(`You didn't mention which day to log. I'm logging this as *#${Yesterday}*.`);
         }
-        const logDay = days[0] || Today;
-        let logDate;
+        const logDay = days[0] || Yesterday;
+        const logDayAsDate = SpecificDateExpression.test(logDay) ? new Date([...logDay.split(/[- \/.]/g), new Date().getFullYear()]) : new Date();
         if (DayExpression.test(logDay)) {
             if (YesterdayExpression.test(logDay)) {
-                now.setDate(now.getDate() - 1);
+                logDayAsDate.setDate(logDayAsDate.getDate() - 1);
             }
-            logDate = now.getDate() + DateSeparator + (now.getMonth() + 1);
         }
-        session.privateConversationData.logDate = logDate || logDay;
+        session.privateConversationData.logDate = logDayAsDate.toISOString().replace('Z', '+0000');
 
         next();
 
@@ -121,7 +120,7 @@ module.exports = exports = [
         }
         const logDuration = durations[0] || WholeDay;
 
-        session.privateConversationData.logDuration = logDuration;
+        session.privateConversationData.logDuration = logDuration.replace(/([mhd])/g, '$1 ').trim();
 
         next();
 
