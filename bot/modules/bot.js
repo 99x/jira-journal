@@ -4,6 +4,7 @@ const builder = require('botbuilder');
 
 const logger = require('./logger');
 const notfound = require('./404');
+const unauthorized = require('./401');
 const journal = require('./journal');
 const help = require('./help');
 const signin = require('./signin');
@@ -58,6 +59,7 @@ bot.on('deleteUserData', (message) => {
 bot.dialog('/', journal);
 
 bot.dialog('/404', notfound);
+bot.dialog('/401', unauthorized);
 
 bot.dialog('/history', journal)
     .triggerAction({
