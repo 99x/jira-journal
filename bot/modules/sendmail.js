@@ -6,6 +6,7 @@ const options = {
     host: 'smtp.office365.com',
     post: 587,
     auth: {
+        fullname: process.env.SMTP_AUTH_USER,
         user: process.env.SMTP_AUTH_USERNAME,
         pass: process.env.SMTP_AUTH_PASSWORD
     },
@@ -21,7 +22,7 @@ const transporter = nodemailer.createTransport(options);
 
 const compose = (email) => {
     return new Promise((resolve, reject) => {
-        email.from = `BOT <${options.auth.user}>`;
+        email.from = `${options.auth.fullname} <${options.auth.user}>`;
 
         transporter.sendMail(email, (ex, ack) => {
             if (ex) {
@@ -36,5 +37,6 @@ const compose = (email) => {
 };
 
 module.exports = exports = {
+    options,
     compose
 };
