@@ -15,11 +15,14 @@ function addWorklog(jiraOptions, issueKey, worklog, callback) {
 
     console.log('Add worklog: ', JSON.stringify(options));
 
-    return request.post(options).then((response) => {
-        let newWorklogId = response.id;
+    return request
+        .post(options)
+        .then((response) => {
+            let newWorklogId = response.id;
 
-        return newWorklogId;
-    }).catch(_handleFailure);
+            return newWorklogId;
+        })
+        .catch(_handleFailure);
 }
 
 // gets the issues that are assigned to a particular user
@@ -97,5 +100,5 @@ function _handleFailure(error) {
         message = `Failed with ${statusCode}`;
     }
 
-    return Promise.reject(message);
+    return Promise.reject(error);
 }
