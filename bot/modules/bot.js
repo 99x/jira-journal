@@ -63,27 +63,27 @@ bot.dialog('/401', unauthorized);
 
 bot.dialog('/history', journal)
     .triggerAction({
-        matches: [/^recent|history/i]
+        matches: [/^recent|history$/]
     });
 
 bot.dialog('/assigned', journal)
     .triggerAction({
-        matches: [/^assigned|my tasks|my jira tasks|assigned to me/i]
+        matches: [/^assigned|my tasks|my jira tasks|assigned to me$/]
     });
 
 bot.dialog('/help', help)
     .triggerAction({
-        matches: [/^help|yelp|how to?/i]
+        matches: [/^help|yelp|how to?$/]
     });
 
 bot.dialog('/signin', signin)
     .triggerAction({
-        matches: [/^sign in|login|let me in/i]
+        matches: [/^sign in|login|let me in$/]
     });
 
 bot.dialog('/reset', reset)
     .triggerAction({
-        matches: [/^reset|reset me|logout|sign out/i]
+        matches: [/^reset|reset me|logout|sign out$/]
     });
 
 module.exports = exports = bot;
