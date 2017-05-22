@@ -4,7 +4,7 @@ const builder = require('botbuilder');
 const jira = require('./jira');
 const auth = require('./auth');
 
-const Hash = '#';
+const Hash = /#/g;
 const EmptyString = '';
 const SingleSpace = ' ';
 
@@ -77,12 +77,11 @@ module.exports = exports = [
         const Yesterday = 'yesterday';
         const DateSeparator = '-'
         const SpecificDateExpression = /(^(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01]))/g;
-        const DayExpression = /^today|yesterday|yday/i;
-        const YesterdayExpression = /^yesterday|yday/i;
+        const DayExpression = /today|yesterday|yday/g;
+        const YesterdayExpression = /yesterday|yday/g;
 
         const tagStream = session.privateConversationData.tagStream.toLowerCase();
         const days = tagStream.match(SpecificDateExpression) || tagStream.match(DayExpression) || [];
-        // const now = new Date();
 
         if (days.length > 1) {
             return session.endConversation(`Sorry! I don't know *which day* to log (worry)`)
