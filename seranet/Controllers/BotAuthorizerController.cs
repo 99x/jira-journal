@@ -49,7 +49,7 @@ namespace Workplace.Eureka.Services.Controllers
                 const string GetJiraAccountsSql = @"SELECT JiraAccounts.account [Name], JiraAccounts.description [Description], JiraUserData.jira_url [Url] 
                                                                             FROM dbo.JiraAccounts INNER JOIN dbo.JiraUserData 
                                                                                 ON JiraAccounts.account_id = JiraUserData.account_id
-                                                                            WHERE JiraUserData.user_id IN
+                                                                            WHERE JiraUserData.is_deleted = 0 AND JiraUserData.user_id IN
                                                                             (SELECT user_id FROM dbo.JiraUsers WHERE system_id = '{0}' OR email_address = '{0}')";
 
                 IEnumerable<JiraAccount> accounts = db.SqlQuery<JiraAccount>(string.Format(GetJiraAccountsSql, username))
@@ -94,7 +94,7 @@ namespace Workplace.Eureka.Services.Controllers
             const string FindProjectSql = @"SELECT JiraProjects.project_key [Key], JiraUserData.jira_url [Url], JiraUserData.external_user_name [Username], JiraUserData.password [Password] 
                                                 FROM dbo.JiraProjects INNER JOIN dbo.JiraUserData 
                                                     ON JiraProjects.account_id = JiraUserData.account_id
-                                                WHERE JiraProjects.project_key = '{1}' AND JiraUserData.user_id IN 
+                                                WHERE JiraProjects.project_key = '{1}' AND JiraUserData.is_deleted = 0 AND JiraUserData.user_id IN 
                                                 (SELECT user_id FROM dbo.JiraUsers WHERE system_id = '{0}' or email_address = '{0}')";
 
             JiraProject proj = db.SqlQuery<JiraProject>(string.Format(FindProjectSql, username, taskId))
