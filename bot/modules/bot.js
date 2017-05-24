@@ -36,7 +36,7 @@ bot.on('contactRelationUpdate', (message) => {
             .subtitle('Your bullet journal - whatever you want to log.')
             .text(`Hay ${message.user.name}... I'm the JIRA Journal Bot for time reporting. Thanks for adding me. Say 'help' to see what I can do`)
             .images([
-                new builder.CardImage().url('https://github.com/99xt/jira-journal/blob/master/icon.png')
+                new builder.CardImage().url('https://github.com/99xt/jira-journal/wiki/icon.png')
             ]);
         const reply = new builder.Message()
             .address(message.address)
