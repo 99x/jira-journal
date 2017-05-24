@@ -1,7 +1,5 @@
 # JIRA Journal - Open Sourced
-<p align="center">
-    <img alt="JIRA Journal BOT Logo" src="https://github.com/99xt/jira-journal/wiki/icon.png" />
-</p>
+![robot](https://github.com/99xt/jira-journal/wiki/icon.png)
 
 JIRA Journal is a new kinda bot that interacts as your bullet journal for JIRA Worklogs. JIRA Journal is updated monthly with new features and bug fixes. You can use it with Skype for now and is limited only for [99X Technology](https://github.com/99xt) employees with JIRA access to report time. This version of JIRA Journal is built using [Bot Framework](https://botframework.com) with a [NodeJS](https://nodejs.org) backend.
 
