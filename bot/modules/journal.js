@@ -11,7 +11,7 @@ const SingleSpace = ' ';
 module.exports = exports = [
     (session, results, next) => {
 
-        const HashtagExpression = /(?:^|[ ])#([a-zA-Z0-9-\.]+)/gm;
+        const HashtagExpression = /(?:^|[ ])#([a-zA-Z0-9-\./]+)/g;
 
         const { text } = session.message;
         const hashtags = text.match(HashtagExpression) || [];
@@ -76,7 +76,7 @@ module.exports = exports = [
 
         const Yesterday = 'yesterday';
         const DateSeparator = '-'
-        const SpecificDateExpression = /(^(0[1-9]|1[012])[- /.](0[1-9]|[12][0-9]|3[01]))/g;
+        const SpecificDateExpression = /\b(0?[1-9]|1[0-2])[\/.-](0?[1-9]|[12][0-9]|3[01])\b/g;
         const DayExpression = /today|yesterday|yday/g;
         const YesterdayExpression = /yesterday|yday/g;
 
@@ -91,7 +91,7 @@ module.exports = exports = [
             session.send(`You didn't mention which day to log. I'm logging this as *#${Yesterday}*.`);
         }
         const logDay = days[0] || Yesterday;
-        const logDayAsDate = SpecificDateExpression.test(logDay) ? new Date([...logDay.split(/[- \/.]/g), new Date().getFullYear()]) : new Date();
+        const logDayAsDate = SpecificDateExpression.test(logDay) ? new Date([...logDay.split(/[\/.-]/g), new Date().getFullYear()]) : new Date();
         if (DayExpression.test(logDay)) {
             if (YesterdayExpression.test(logDay)) {
                 logDayAsDate.setDate(logDayAsDate.getDate() - 1);
@@ -104,7 +104,7 @@ module.exports = exports = [
     },
     (session, results, next) => {
 
-        const DurationExpression = /^([0-9]{2})\.([0-9]{2})(h)|^([0-9]{2})(m)|^([0-9]{1})(d)|^([0-9]{2})(h)|^([0-9]{1})\.([0-9]{1})(d)/g;
+        const DurationExpression = /\b(?:\d{1,2}\.\d{1}|\d+)(d)|(?:\d{1,2}\.\d{1,2}|\d+)(h)|(?:\d{1,2})(m)\b/g;
         const WholeDay = '1d';
 
         const { tagStream } = session.privateConversationData;
