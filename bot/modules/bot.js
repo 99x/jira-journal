@@ -21,7 +21,7 @@ const bot = new builder.UniversalBot(connector);
 
 bot.set('persistConversationData', true);
 
-bot.use(logger);
+bot.use(...[logger]);
 
 bot.on('error', (data) => {
     console.log('Oops! Something went wrong. Shame on us! (facepalm)', arguments);
