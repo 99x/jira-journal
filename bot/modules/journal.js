@@ -169,7 +169,7 @@ module.exports = exports = [
 
                     case 404:
                         session.replaceDialog('/404', {
-                            message: `Oops! Couldn't contact JIRA! Shame on us (worry)`,
+                            message: `Oops! ${logTask} task doesn't exists or you don't have permission, ${name}`,
                             exception: ex
                         });
                         break;
