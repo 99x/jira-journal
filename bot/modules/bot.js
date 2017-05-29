@@ -24,7 +24,7 @@ bot.set('persistConversationData', true);
 bot.use(...[logger]);
 
 bot.on('error', (data) => {
-    console.log('Oops! Something went wrong. Shame on us! (facepalm)', arguments);
+    console.log('Oops! Something went wrong. Shame on us! (facepalm)');
 });
 
 bot.on('contactRelationUpdate', (message) => {
