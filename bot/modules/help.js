@@ -15,15 +15,15 @@ module.exports = exports = [
         const reply = new builder.Message(session)
             .attachmentLayout(builder.AttachmentLayout.list)
             .attachments([card]);
-            
+
         session.send(reply);
 
         const { name } = session.message.user;
-        const email = session.userData.profile.emailAddress;
 
         if (!session.userData.profile) {
             session.send(`Hey ${name}... first things first, you need to sign in, in order to do following things`);
         } else {
+            const email = session.userData.profile.emailAddress;
             session.send(`Hay ${name}... looks like you already signed in as **${email}**, so you can do following things`);
         }
         session.send(`* Type **sign in** so I could log all your time report entries to JIRA.\n* Type **reset** and I will lose all the sweet memories we had together and we can start all over.\n* Type **who am I?** to figure out how much I know about you ;)`);
