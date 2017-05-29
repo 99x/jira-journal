@@ -25,7 +25,7 @@ module.exports = exports = [
             .join(SingleSpace)
             .replace(Hash, EmptyString);
 
-        console.log('Hashtags :', session.privateConversationData.tagStream);
+        //console.log('Hashtags :', session.privateConversationData.tagStream);
 
         next();
 
@@ -41,7 +41,7 @@ module.exports = exports = [
             .join(EmptyString);
         const tasks = tagStream.match(TaskExpression) || [];
 
-        console.log('Tasks found:', tagStream, JSON.stringify(tasks));
+        //console.log('Tasks found:', tagStream, JSON.stringify(tasks));
 
         if (tasks.length != 1) {
             return session.endConversation(`Sorry! I don't know *which task* to log (worry)`);
@@ -56,9 +56,9 @@ module.exports = exports = [
 
         auth.authorize(email, logTask)
             .then((response) => {
-                
-                console.log('Received Project:', JSON.stringify(response));
-                
+
+                //console.log('Received Project:', JSON.stringify(response));
+
                 session.privateConversationData.logTask = logTask;
                 session.privateConversationData.logProject = response.project;
 
@@ -147,7 +147,7 @@ module.exports = exports = [
             timeSpent: logDuration
         };
 
-        console.log('BOT worklog:', JSON.stringify(options));
+        //console.log('BOT worklog:', JSON.stringify(options));
 
         jira.addWorklog(options, logTask, worklog)
             .then((response) => {
@@ -157,7 +157,7 @@ module.exports = exports = [
                 const { statusCode } = ex;
                 const { name } = session.message.user;
 
-                console.log('Error logging work on JIRA:', JSON.stringify(ex));
+                //console.log('Error logging work on JIRA:', JSON.stringify(ex));
 
                 switch (statusCode) {
                     case 401:

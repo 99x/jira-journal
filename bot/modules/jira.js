@@ -13,7 +13,7 @@ function addWorklog(jiraOptions, issueKey, worklog, callback) {
     let urlStub = `issue/${issueKey}/worklog`;
     let options = _getRequestOptions(jiraOptions, urlStub, worklog);
 
-    console.log('Add worklog: ', JSON.stringify(options));
+    //console.log('Add worklog: ', JSON.stringify(options));
 
     return request
         .post(options)

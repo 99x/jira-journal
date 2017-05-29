@@ -25,7 +25,7 @@ module.exports = exports = [
                 next();
 
             }).catch((ex) => {
-                console.log('Auth Exception: ', JSON.stringify(ex));
+                //console.log('Auth Exception: ', JSON.stringify(ex));
                 session.send(`Oops! Something went wrong. Shame on us (facepalm). Let's start over.`);
                 session.replaceDialog('/signin');
             });
@@ -44,21 +44,21 @@ module.exports = exports = [
             html: `You just tryed to sign in with JIRA Journal. Here's your <b>Secret Code: ${secretCode}</b>`
         };
 
-        console.log(`Email template: ${sendmail.options.auth.user}, ${draft.to}`);
+        //console.log(`Email template: ${sendmail.options.auth.user}, ${draft.to}`);
 
         session.sendTyping();
 
         sendmail.compose(draft)
             .then(() => {
 
-                console.log(`Dropped an email to ${email}`);
+                //console.log(`Dropped an email to ${email}`);
 
                 session.send(`Ok. I dropped you a mail to ${email}.`);
                 next();
 
             }).catch((ex) => {
 
-                console.log(`Failed with error: ${ex.message}`);
+                //console.log(`Failed with error: ${ex.message}`);
 
                 session.send(`Oops! Something went wrong with the email. Shame on us (facepalm). Let's start over.`);
                 session.replaceDialog('/signin');
