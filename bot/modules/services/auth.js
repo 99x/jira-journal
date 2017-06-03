@@ -66,7 +66,7 @@ const handleFailure = (error) => {
         message = `Failed with ${statusCode}`;
     }
 
-    return Promise.reject(message);
+    return Promise.reject(error);
 };
 
 module.exports = exports = {

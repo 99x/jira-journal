@@ -2,13 +2,11 @@
 
 const builder = require('botbuilder');
 
-const logger = require('./logger');
-const notfound = require('./404');
-const unauthorized = require('./401');
-const journal = require('./journal');
-const help = require('./help');
-const signin = require('./signin');
-const reset = require('./reset');
+const logger = require('./middleware/logger');
+const worklog = require('./dialogs/worklog');
+const help = require('./dialogs/help');
+const signin = require('./dialogs/signin');
+const reset = require('./dialogs/reset');
 
 const chatsettings = {
     appId: process.env.MICROSOFT_APP_ID,
@@ -17,7 +15,7 @@ const chatsettings = {
 
 const connector = new builder.ChatConnector(chatsettings);
 
-const bot = new builder.UniversalBot(connector);
+const bot = new builder.UniversalBot(connector, null, 'worklog:/');
 
 bot.set('persistConversationData', true);
 
@@ -31,18 +29,15 @@ bot.on('contactRelationUpdate', (message) => {
 
     if (message.action === 'add') {
 
-        const card = new builder.HeroCard()
+        const welcomeCard = new builder.HeroCard()
             .title('JIRA Journal Bot')
             .subtitle('Your bullet journal - whatever you want to log.')
             .text(`Hay ${message.user.name}... thanks for adding me. Say 'help' to see what I can do`)
             .images([
-                new builder.CardImage().url('https://github.com/99xt/jira-journal/wiki/icon.png')
+                new builder.CardImage().url('https://github.com/99xt/jira-journal/wiki/icon.png').alt('jira-jouranl-bot-logo')
             ]);
-        const reply = new builder.Message()
-            .address(message.address)
-            .attachmentLayout(builder.AttachmentLayout.list)
-            .attachments([card]);
-        bot.send(reply);
+
+        bot.send(new builder.Message().address(message.address).addAttachment(welcomeCard));
     } else {
         // delete their data
     }
@@ -56,34 +51,24 @@ bot.on('deleteUserData', (message) => {
     // User asked to delete their data
 });
 
-bot.dialog('/', journal);
+bot.library(worklog.createNew());
 
-bot.dialog('/404', notfound);
-bot.dialog('/401', unauthorized);
+// bot.dialog('/history', journal)
+//     .triggerAction({
+//         matches: [/^(history|recent|recently used)$/g]
+//     });
 
-bot.dialog('/history', journal)
-    .triggerAction({
-        matches: [/^(history|recent|recently used)$/g]
-    });
+// bot.dialog('/assigned', journal)
+//     .triggerAction({
+//         matches: [/^(assigned|my tasks|my jira tasks|assigned to me)$/g]
+//     });
 
-bot.dialog('/assigned', journal)
-    .triggerAction({
-        matches: [/^(assigned|my tasks|my jira tasks|assigned to me)$/g]
-    });
+bot.library(help.createNew());
+bot.library(signin.createNew());
+bot.library(reset.createNew());
 
-bot.dialog('/help', help)
-    .triggerAction({
-        matches: [/^(help|yelp|how to do (.*)\?|how do i (.*)\?)$/g]
-    });
-
-bot.dialog('/signin', signin)
-    .triggerAction({
-        matches: [/^(sign in|login|let me in)$/g]
-    });
-
-bot.dialog('/reset', reset)
-    .triggerAction({
-        matches: [/^(reset|reset me|logout|sign out)$/g]
-    });
+// bot.dialog('/', (session, args) => {
+//     session.replaceDialog('/worklog', args);
+// });
 
 module.exports = exports = bot;
