@@ -31,14 +31,14 @@ lib.dialog('/', [
         },
 
         (session, results, next) => {
-            const usernameOrEmail = session.privateConversationData.usernameOrEmail = results.response;
+            const usernameOrEmail = session.dialogData.usernameOrEmail = results.response;
             session.sendTyping();
 
             auth
                 .authenticate(usernameOrEmail)
                 .then((response) => {
-                    session.privateConversationData.profile = response.profile;
-                    session.privateConversationData.jira = response.instances;
+                    session.dialogData.profile = response.profile;
+                    session.dialogData.jira = response.instances;
                     next();
                 }).catch((ex) => {
                     const {
@@ -61,8 +61,8 @@ lib.dialog('/', [
             const {
                 name
             } = session.message.user;
-            const email = session.privateConversationData.profile.emailAddress;
-            const secretCode = session.privateConversationData.secretCode = secrets.whisper();
+            const email = session.dialogData.profile.emailAddress;
+            const secretCode = session.dialogData.secretCode = secrets.whisper();
 
             const draft = {
                 to: `${name} <${email}>`,
@@ -79,7 +79,7 @@ lib.dialog('/', [
                     next();
                 }).catch((ex) => {
                     session.send(`Oops! Something went wrong with the email. Shame on us (facepalm). Let's start over.`);
-                    session.replaceDialog('/signin');
+                    session.replaceDialog('/signin', session.dialogData);
                 });
 
         },
