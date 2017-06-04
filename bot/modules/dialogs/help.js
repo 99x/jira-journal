@@ -4,7 +4,7 @@ const builder = require('botbuilder');
 const lib = new builder.Library('help');
 
 lib.dialog('/', [
-        (session) => {
+        (session, args, next) => {
 
             const card = new builder.HeroCard(session)
                 .title('JIRA Journal Bot')
@@ -36,7 +36,7 @@ lib.dialog('/', [
         }
     ])
     .triggerAction({
-        matches: [/^(help|how do i (.*)\?)$/g]
+        matches: ['/help']
     });
 
 module.exports = exports = {

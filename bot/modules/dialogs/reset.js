@@ -15,7 +15,7 @@ lib.dialog('/', [
         }
     ])
     .triggerAction({
-        matches: [/^(reset|reset me|logout|sign out|start over)$/g]
+        matches: ['/reset']
     });
 
 module.exports = exports = {

@@ -7,13 +7,27 @@ const secrets = require('../services/secrets');
 const auth = require('../services/auth');
 
 const lib = new builder.Library('signin');
+
+const find = builder.EntityRecognizer.findEntity;
+
 lib.dialog('/', [
-        (session) => {
+        (session, args, next) => {
 
             const {
                 name
             } = session.message.user;
-            builder.Prompts.text(session, `What's your domain username or office email address, ${name}?`);
+            const {
+                entities
+            } = args.intent;
+
+            const usernameOrEmail = find(entities, 'username') || find(entities, 'email');
+            if (usernameOrEmail) {
+                next({
+                    response: usernameOrEmail
+                });
+            } else {
+                builder.Prompts.text(session, `What's your domain username or office email address, ${name}?`);
+            }
         },
 
         (session, results, next) => {
@@ -114,7 +128,7 @@ lib.dialog('/', [
         }
     ])
     .triggerAction({
-        matches: [/^(sign in|login)$/g]
+        matches: ['/signin']
     })
     .cancelAction('/signin-cancel', '(y)', {
         matches: [/^(cancel|nevermind)$/g]
