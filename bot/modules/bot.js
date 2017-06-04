@@ -5,7 +5,7 @@ const builder = require('botbuilder');
 const logger = require('./middleware/logger');
 const recognizer = require('./middleware/recognizer');
 
-const worklog = require('./dialogs/worklog');
+const worklog = require('./dialogs/worklog.v2');
 const help = require('./dialogs/help');
 const signin = require('./dialogs/signin');
 const reset = require('./dialogs/reset');
