@@ -52,7 +52,7 @@ lib.dialog('/task', [
                 entities
             } = args.intent;
 
-            const task = find(entities, 'jiraTask');
+            const task = find(entities, 'task');
 
             if (task) {
                 next({
@@ -100,7 +100,7 @@ lib.dialog('/task', [
             session.endDialogWithResult(results);
         }
     ])
-    .cancelAction('/jira-task-cancel', '(y)', {
+    .cancelAction('/task-cancel', '(y)', {
         matches: [/^(cancel|nevermind)$/g]
     });
 
@@ -117,7 +117,7 @@ lib.dialog('/time-spent', [
                     response: timeSpent
                 });
             } else {
-                session.endDialog('');
+                session.send(`I don't know how much *time you spent*.`);
             }
         },
         (session, results) => {
@@ -133,33 +133,35 @@ lib.dialog('/date-started', [
             const {
                 entities
             } = args.intent;
-            const specifiedDay = find(args.intent.entities, 'day');
-            const specificDate = find(args.intent.entities, 'datetimeV2');
+            const dateStarted = findDayStarted() || findDateStarted();
 
-            if (specifiedDay) {
+            if (dateStarted) {
                 next({
-                    response: convertDayToDate(specifiedDay)
-                });
-            } else if (specificDate) {
-                next({
-                    response: convertToDate(specificDate)
+                    response: dateStarted
                 });
             } else {
                 return session.endDialog(`Sorry! I don't know *when you started* it (worry)`)
             }
 
-            function convertDayToDate(d) {
-                const Yesterday = /yesterday|yday/g;
-                const dt = new Date();
-                if (Yesterday.test(d.toLowerCase())) {
-                    dt.setDate(dt.getDate() - 1);
+            function findDayStarted() {
+                const today = find(entities, 'dayStarted::today');
+                const yday = find(entities, 'dayStarted:yesterday');
+
+                if (today) {
+                    return new Date();
+                } else if (yday) {
+                    const dt = new Date();
+                    dt.setDate(dt.getDate() + 1);
+                    return dt;
                 }
-                return dt;
             }
 
-            function convertToDate(d) {
-                const dt = new Date([...d.split(/[\/.-]/g), new Date().getFullYear()]);
-                return dt;
+            function findDateStarted() {
+                const somedate = find(entities, 'builtin.datetimeV2.date').entity;
+                if (somedate) {
+                    const dt = new Date([...somedate.split(/[\/.-]/g), new Date().getFullYear()]);
+                    return dt;
+                }
             }
         },
         (session, results) => {
