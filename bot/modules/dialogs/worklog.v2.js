@@ -8,6 +8,25 @@ const lib = new builder.Library('worklog');
 
 const find = builder.EntityRecognizer.findEntity;
 
+const findDatetime = (entities) => {
+    const ResolutionProp = 'resolution';
+
+    const datetime = find(entities, 'builtin.datetimeV2.date');
+    const resolution = Object.prototype.hasOwnProperty.call(datetime, 'resolution') ? datetime[ResolutionProp] : null;
+    const datetimeValues = resolution ? resolution.values : [];
+
+    const value = datetimeValues.find((element) => {
+        if (element.type === 'date') {
+            const dt = new Date(element.value);
+            if (Object.prototype.toString.call(dt) === '[object Date]') {
+                return !isNaN(dt.getTime());
+            }
+        }
+        return false;
+    });
+    return value;
+};
+
 lib.dialog('/', [
         (session, args) => {
             session.dialogData.args = args;
@@ -51,7 +70,6 @@ lib.dialog('/task', [
             const {
                 entities
             } = args.intent;
-
             const task = find(entities, 'task');
 
             if (task) {
@@ -68,32 +86,29 @@ lib.dialog('/task', [
             const usernameOrEmail = session.userData.profile.emailAddress;
             const task = results.response;
 
-            auth.authorize(usernameOrEmail, task).then(success).catch(failure);
+            auth.authorize(usernameOrEmail, task)
+                .then((response) => {
+                    next({
+                        response: response
+                    });
+                })
+                .catch((error) => {
+                    const {
+                        statusCode
+                    } = error;
 
-            function success(response) {
-                next({
-                    response: response
+                    switch (statusCode) {
+                        case 401:
+                            session.endDialog(`Oops! Looks like you don't have access to that project. Talk to IT Services.`);
+                            break;
+                        case 404:
+                            session.endDialog(`Oops! Cannot find that task. May be it doesn't exists or not created yet.`);
+                            break;
+                        default:
+                            session.endDialog(`Oops! Something went wrong. Shame on us! Try a bit later.`);
+                            break;
+                    }
                 });
-            }
-
-            function failure(error) {
-
-                const {
-                    statusCode
-                } = error;
-
-                switch (statusCode) {
-                    case 401:
-                        session.endDialog(`Oops! Looks like you don't have access to that project. Talk to IT Services.`);
-                        break;
-                    case 404:
-                        session.endDialog(`Oops! Cannot find that task. May be it doesn't exists or not created yet.`);
-                        break;
-                    default:
-                        session.endDialog(`Oops! Something went wrong. Shame on us! Try a bit later.`);
-                        break;
-                }
-            }
         },
 
         (session, results) => {
@@ -130,10 +145,11 @@ lib.dialog('/time-spent', [
 
 lib.dialog('/date-started', [
         (session, args, next) => {
+
             const {
                 entities
             } = args.intent;
-            const dateStarted = findDayStarted() || findDateStarted();
+            const dateStarted = findDatetime(entities);
 
             if (dateStarted) {
                 next({
@@ -141,27 +157,6 @@ lib.dialog('/date-started', [
                 });
             } else {
                 return session.endDialog(`Sorry! I don't know *when you started* it (worry)`)
-            }
-
-            function findDayStarted() {
-                const today = find(entities, 'dayStarted::today');
-                const yday = find(entities, 'dayStarted:yesterday');
-
-                if (today) {
-                    return new Date();
-                } else if (yday) {
-                    const dt = new Date();
-                    dt.setDate(dt.getDate() + 1);
-                    return dt;
-                }
-            }
-
-            function findDateStarted() {
-                const somedate = find(entities, 'builtin.datetimeV2.date').entity;
-                if (somedate) {
-                    const dt = new Date([...somedate.split(/[\/.-]/g), new Date().getFullYear()]);
-                    return dt;
-                }
             }
         },
         (session, results) => {
