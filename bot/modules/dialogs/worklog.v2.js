@@ -11,7 +11,7 @@ const find = (...args) => {
     return el ? el.entity : null;
 };
 const findTimePart = (entities) => {
-    const entity = find.call(this, ...[entities, 'timeSpent']);
+    const entity = find.call(this, ...[entities, 'timeSpent']) || find.call(this, ...[entities, 'builtin.datetimeV2.duration']);
     if (entity) {
         return String.prototype.split.call(entity, /\s/g).join('').replace(/([mhd])/g, '$1 ').trim();
     }
