@@ -8,7 +8,10 @@ const auth = require('../services/auth');
 
 const lib = new builder.Library('signin');
 
-const find = builder.EntityRecognizer.findEntity;
+const find = (...args) => {
+    const el = builder.EntityRecognizer.findEntity.call(this, ...args);
+    return el ? el.entity : null;
+};
 
 lib.dialog('/', [
         (session, args, next) => {
@@ -20,7 +23,8 @@ lib.dialog('/', [
                 entities
             } = args.intent;
 
-            const usernameOrEmail = find(entities, 'username') || find(entities, 'email');
+            const usernameOrEmail = find.call(this, ...[entities, 'username']) || find.call(this, ...[entities, 'builtin.email']);
+
             if (usernameOrEmail) {
                 next({
                     response: usernameOrEmail
@@ -92,7 +96,7 @@ lib.dialog('/', [
 
             const {
                 secretCode
-            } = session.privateConversationData;
+            } = session.dialogData;
             const confirmCode = results.response;
 
             if (confirmCode !== secretCode) {
@@ -107,9 +111,9 @@ lib.dialog('/', [
 
             const {
                 jira
-            } = session.privateConversationData;
+            } = session.dialogData;
 
-            session.userData = session.privateConversationData;
+            session.userData = session.dialogData;
 
             if (jira.length == 0) {
                 return session.endDialog('(y)');
