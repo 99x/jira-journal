@@ -4,69 +4,114 @@ const builder = require('botbuilder');
 const jira = require('../services/jira');
 const auth = require('../services/auth');
 
-const Hash = /#/g;
-const EmptyString = '';
-const SingleSpace = ' ';
 const lib = new builder.Library('worklog');
 
+const find = (...args) => {
+    const el = builder.EntityRecognizer.findEntity.call(this, ...args);
+    return el ? el.entity : null;
+};
+const findTimePart = (entities) => {
+    const entity = find.call(this, ...[entities, 'timeSpent']) || find.call(this, ...[entities, 'builtin.datetimeV2.duration']);
+    if (entity) {
+        return String.prototype.split.call(entity, /\s/g).join('').replace(/([mhd])/g, '$1 ').trim();
+    }
+    return null;
+};
+const findDatePart = (entities) => {
+    const ResolutionProp = 'resolution';
+
+    const entity = builder.EntityRecognizer.findEntity.call(this, ...[entities, 'builtin.datetimeV2.date']);
+    const resolution = Object.prototype.hasOwnProperty.call(entity, 'resolution') ? entity[ResolutionProp] : null;
+    const datetimeValues = resolution ? resolution.values : [];
+
+    const isvalidDate = (val) => {
+        const dt = new Date(val);
+        if (Object.prototype.toString.call(dt) === '[object Date]') {
+            return !isNaN(dt.getTime());
+        }
+        return false;
+    };
+
+    const date = Array.prototype.find.call(datetimeValues, (el) => {
+        return el.type === 'date' ? isvalidDate.call(this, ...[el.value]) : false;
+    });
+
+    return date ? new Date(date.value) : null;
+};
+
 lib.dialog('/', [
-        (session, results, next) => {
+        (session, args) => {
+            session.dialogData.args = args;
+            session.beginDialog('/task', args);
+        },
 
-            const HashtagExpression = /(?:^|[ ])#([a-zA-Z0-9-\./]+)/g;
-
+        (session, results) => {
             const {
-                text
-            } = session.message;
-            const hashtags = text.match(HashtagExpression) || [];
+                task,
+                project
+            } = results.response;
 
-            if (hashtags.length == 0) {
-                return session.endDialog(`Sorry! I don't know *what task* to log (worry)`);
-            }
+            session.dialogData.task = task;
+            session.dialogData.project = project;
 
-            session.privateConversationData.tagStream = hashtags
-                .map(Function.prototype.call, String.prototype.trim)
-                .join(SingleSpace)
-                .replace(Hash, EmptyString);
+            session.beginDialog('/time-spent', session.dialogData.args);
+        },
 
-            next({
-                response: session.privateConversationData.tagStream
-            });
+        (session, results) => {
 
+            session.dialogData.timeSpent = results.response
+            session.beginDialog('/date-started', session.dialogData.args);
         },
 
         (session, results, next) => {
 
-            const TaskExpression = /\d+-[A-Za-z]+(?!-?[a-zA-Z]{1,10})/g;
-            const email = session.userData.profile.emailAddress;
-            const tagStream = results.response.toString()
-                .split(EmptyString)
-                .reverse()
-                .join(EmptyString);
-            const tasks = tagStream.match(TaskExpression) || [];
+            session.dialogData.dateStarted = results.response;
+            session.beginDialog('/persist', session.dialogData);
+        }
+    ])
+    .triggerAction({
+        matches: ['/worklog']
+    })
+    .cancelAction('/worklog-cancel', '(y)', {
+        matches: [/^(cancel|nevermind)$/g]
+    });
 
-            if (tasks.length != 1) {
-                return session.endDialog(`Sorry! I don't know *which task* to log (worry)`);
+lib.dialog('/task', [
+        (session, args, next) => {
+
+            const {
+                entities
+            } = args.intent;
+            const task = find.call(this, ...[entities, 'task']);
+
+            if (task) {
+                next({
+                    response: String.prototype.replace.call(task, /\s/g, '')
+                });
+            } else {
+                session.endDialog(`I don't know *what task* to log (worry)`);
             }
+        },
 
-            let [logTask] = tasks;
-            logTask = logTask
-                .toString()
-                .split(EmptyString)
-                .reverse()
-                .join(EmptyString);
+        (session, results, next) => {
 
-            auth.authorize(email, logTask)
+            const usernameOrEmail = session.userData.profile.emailAddress;
+            const task = results.response;
+
+            auth.authorize(usernameOrEmail, task)
                 .then((response) => {
-
-                    session.privateConversationData.logTask = logTask;
-                    session.privateConversationData.logProject = response.project;
-
-                    next();
-
-                }).catch((ex) => {
+                    next({
+                        response: {
+                            project: response.project,
+                            task,
+                        }
+                    });
+                })
+                .catch((error) => {
                     const {
                         statusCode
-                    } = ex;
+                    } = error;
+
                     switch (statusCode) {
                         case 401:
                             session.endDialog(`Oops! Looks like you don't have access to that project. Talk to IT Services.`);
@@ -81,120 +126,115 @@ lib.dialog('/', [
                 });
         },
 
-        (session, results, next) => {
-
-            const Yesterday = 'yesterday';
-            const DateSeparator = '-'
-            const SpecificDateExpression = /\b(0?[1-9]|1[0-2])[\/.-](0?[1-9]|[12][0-9]|3[01])\b/g;
-            const DayExpression = /today|yesterday|yday/g;
-            const YesterdayExpression = /yesterday|yday/g;
-
-            const tagStream = session.privateConversationData.tagStream.toLowerCase();
-            const days = tagStream.match(SpecificDateExpression) || tagStream.match(DayExpression) || [];
-
-            if (days.length > 1) {
-                return session.endDialog(`Sorry! I don't know *which day* to log (worry)`)
-            }
-
-            if (days.length == 0) {
-                session.send(`You didn't mention which day to log. I'm logging this as *#${Yesterday}*.`);
-            }
-            const logDay = days[0] || Yesterday;
-            const logDayAsDate = SpecificDateExpression.test(logDay) ? new Date([...logDay.split(/[\/.-]/g), new Date().getFullYear()]) : new Date();
-            if (DayExpression.test(logDay)) {
-                if (YesterdayExpression.test(logDay)) {
-                    logDayAsDate.setDate(logDayAsDate.getDate() - 1);
-                }
-            }
-            session.privateConversationData.logDate = logDayAsDate.toISOString().replace('Z', '+0000');
-
-            next();
-        },
-
-        (session, results, next) => {
-
-            const DurationExpression = /\b(?:\d{1,2}\.\d{1}|\d+)(d)|(?:\d{1,2}\.\d{1,2}|\d+)(h)|(?:\d{1,2})(m)\b/g;
-            const WholeDay = '1d';
-
-            const {
-                tagStream
-            } = session.privateConversationData;
-            const durations = tagStream.match(DurationExpression) || [];
-
-            if (durations.length > 1) {
-                return session.endDialog(`Sorry! I don't know *how much time* to log (worry)`);
-            }
-
-            if (durations.length == 0) {
-                session.send(`You didn't mention how much time to log. I'm logging this as a *Whole Day*.`);
-            }
-            const logDuration = durations[0] || WholeDay;
-
-            session.privateConversationData.logDuration = logDuration.replace(/([mhd])/g, '$1 ').trim();
-
-            next();
-
-        },
-
-        (session, results, next) => {
-
-            const {
-                logTask,
-                logProject,
-                logDate,
-                logDuration
-            } = session.privateConversationData;
-
-            const {
-                text
-            } = session.message;
-
-            const options = {
-                url: logProject.url,
-                username: logProject.username,
-                password: logProject.password
-            };
-
-            const worklog = {
-                comment: text,
-                started: logDate,
-                timeSpent: logDuration
-            };
-
-            jira.addWorklog(options, logTask, worklog)
-                .then((response) => {
-                    session.endDialog('(y)');
-                })
-                .catch((ex) => {
-                    const {
-                        statusCode
-                    } = ex;
-                    const {
-                        name
-                    } = session.message.user;
-
-                    switch (statusCode) {
-                        case 401:
-                            session.endDialog(`Your JIRA credentials no longer working, ${name}. Just talk to IT Services about it.`);
-                            break;
-
-                        case 404:
-                            session.endDialog(`Oops! ${logTask} task doesn't exists or you don't have permission, ${name}.`);
-                            break;
-
-                        default:
-                            session.endDialog(`Oops! Something went wrong. Shame on us (facepalm). Let's try again in few mins.`);
-                            break;
-                    }
-                });
+        (session, results) => {
+            session.endDialogWithResult(results);
         }
     ])
-    .triggerAction({
-        matches: [/(?:^|[ ])#([a-zA-Z0-9-\./]+)/g]
-    })
-    .cancelAction('/worklog-cancel', '(y)', {
+    .cancelAction('/task-cancel', '(y)', {
         matches: [/^(cancel|nevermind)$/g]
     });
+
+lib.dialog('/time-spent', [
+        (session, args, next) => {
+            const {
+                entities
+            } = args.intent;
+
+            console.log('Time spent args: ', JSON.stringify(entities));
+
+            const timeSpent = findTimePart.call(this, ...[entities]);
+
+            if (timeSpent) {
+                next({
+                    response: timeSpent
+                });
+            } else {
+                session.send(`I don't know how much *time you spent*.`);
+            }
+        },
+        (session, results) => {
+            session.endDialogWithResult(results);
+        }
+    ])
+    .cancelAction('/time-spent-cancel', '(y)', {
+        matches: [/^(cancel|nevermind)$/g]
+    });
+
+lib.dialog('/date-started', [
+        (session, args, next) => {
+
+            const {
+                entities
+            } = args.intent;
+            const dateStarted = findDatePart.call(this, ...[entities]);
+
+            if (dateStarted) {
+                next({
+                    response: dateStarted.toISOString().replace('Z', '+0000')
+                });
+            } else {
+                return session.endDialog(`Sorry! I don't know *when you started* it (worry)`)
+            }
+        },
+        (session, results) => {
+            session.endDialogWithResult(results);
+        }
+    ])
+    .cancelAction('/date-started-cancel', '(y)', {
+        matches: [/^(cancel|nevermind)$/g]
+    });
+
+lib.dialog('/persist', [
+    (session, args) => {
+
+        const {
+            task,
+            project,
+            dateStarted,
+            timeSpent
+        } = args;
+
+        const {
+            text
+        } = session.message;
+
+        const worklog = {
+            comment: text,
+            started: dateStarted,
+            timeSpent: timeSpent
+        };
+
+        console.log('Add Worklog: ', project, task, worklog);
+
+        jira.addWorklog(project, task, worklog)
+            .then((response) => {
+                session.endDialog('(y)');
+            })
+            .catch((error) => {
+                const {
+                    statusCode
+                } = error;
+
+                const {
+                    name
+                } = session.message.user;
+
+                switch (statusCode) {
+                    case 401:
+                        session.endDialog(`Your JIRA credentials no longer working, ${name}. Just talk to IT Services about it.`);
+                        break;
+
+                    case 404:
+                        session.endDialog(`Oops! ${task} task doesn't exists or you don't have permission, ${name}.`);
+                        break;
+
+                    default:
+                        session.endDialog(`Oops! Something went wrong. Shame on us (facepalm). Let's try again in few mins.`);
+                        break;
+                }
+            });
+    }
+]);
 
 module.exports = exports = {
     createNew: () => {
