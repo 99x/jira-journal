@@ -6,25 +6,37 @@ const auth = require('../services/auth');
 
 const lib = new builder.Library('worklog');
 
-const find = builder.EntityRecognizer.findEntity;
-
-const findDatetime = (entities) => {
+const find = (...args) => {
+    const el = builder.EntityRecognizer.findEntity.call(this, ...args);
+    return el ? el.entity : null;
+};
+const findTimePart = (entities) => {
+    const entity = find.call(this, ...[entities, 'timeSpent']);
+    if (entity) {
+        return String.prototype.split.call(entity, /\s/g).join('').replace(/([mhd])/g, '$1 ').trim();
+    }
+    return null;
+};
+const findDatePart = (entities) => {
     const ResolutionProp = 'resolution';
 
-    const datetime = find(entities, 'builtin.datetimeV2.date');
-    const resolution = Object.prototype.hasOwnProperty.call(datetime, 'resolution') ? datetime[ResolutionProp] : null;
+    const entity = builder.EntityRecognizer.findEntity.call(this, ...[entities, 'builtin.datetimeV2.date']);
+    const resolution = Object.prototype.hasOwnProperty.call(entity, 'resolution') ? entity[ResolutionProp] : null;
     const datetimeValues = resolution ? resolution.values : [];
 
-    const value = datetimeValues.find((element) => {
-        if (element.type === 'date') {
-            const dt = new Date(element.value);
-            if (Object.prototype.toString.call(dt) === '[object Date]') {
-                return !isNaN(dt.getTime());
-            }
+    const isvalidDate = (val) => {
+        const dt = new Date(val);
+        if (Object.prototype.toString.call(dt) === '[object Date]') {
+            return !isNaN(dt.getTime());
         }
         return false;
+    };
+
+    const date = Array.prototype.find.call(datetimeValues, (el) => {
+        return el.type === 'date' ? isvalidDate.call(this, ...[el.value]) : false;
     });
-    return value;
+
+    return date ? new Date(date.value) : null;
 };
 
 lib.dialog('/', [
@@ -70,11 +82,11 @@ lib.dialog('/task', [
             const {
                 entities
             } = args.intent;
-            const task = find(entities, 'task');
+            const task = find.call(this, ...[entities, 'task']);
 
             if (task) {
                 next({
-                    response: task
+                    response: String.prototype.replace.call(task, /\s/g, '')
                 });
             } else {
                 session.endDialog(`I don't know *what task* to log (worry)`);
@@ -89,7 +101,10 @@ lib.dialog('/task', [
             auth.authorize(usernameOrEmail, task)
                 .then((response) => {
                     next({
-                        response: response
+                        response: {
+                            project: response.project,
+                            task,
+                        }
                     });
                 })
                 .catch((error) => {
@@ -125,7 +140,9 @@ lib.dialog('/time-spent', [
                 entities
             } = args.intent;
 
-            const timeSpent = find(entities, 'timeSpent');
+            console.log('Time spent args: ', JSON.stringify(entities));
+
+            const timeSpent = findTimePart.call(this, ...[entities]);
 
             if (timeSpent) {
                 next({
@@ -149,11 +166,11 @@ lib.dialog('/date-started', [
             const {
                 entities
             } = args.intent;
-            const dateStarted = findDatetime(entities);
+            const dateStarted = findDatePart.call(this, ...[entities]);
 
             if (dateStarted) {
                 next({
-                    response: dateStarted
+                    response: dateStarted.toISOString().replace('Z', '+0000')
                 });
             } else {
                 return session.endDialog(`Sorry! I don't know *when you started* it (worry)`)
@@ -175,7 +192,7 @@ lib.dialog('/persist', [
             project,
             dateStarted,
             timeSpent
-        } = session.dialogData;
+        } = args;
 
         const {
             text
@@ -186,6 +203,8 @@ lib.dialog('/persist', [
             started: dateStarted,
             timeSpent: timeSpent
         };
+
+        console.log('Add Worklog: ', project, task, worklog);
 
         jira.addWorklog(project, task, worklog)
             .then((response) => {
