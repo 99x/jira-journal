@@ -36,7 +36,7 @@ lib.dialog('/ano', [
         } = session.message.user;
 
         session.send(`Hay ${name}...`);
-        session.endDialog(`Looks like you haven't signed in yet. Say **sign in** or **sign in as _your domain username/email address_** so we can proceed :)`);
+        session.endDialog(`Looks like you haven't signed in yet. Say **sign in** or **sign in as _your domain username_** OR **_email address_** so we can proceed :)`);
     }
 ]);
 
