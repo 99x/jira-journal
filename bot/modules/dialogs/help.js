@@ -18,7 +18,7 @@ lib.dialog('/', [
 
             session.send(reply);
 
-            session.beginDialog('/greet:/');
+            session.beginDialog('greet:/');
         },
 
         (session, args, next) => {
