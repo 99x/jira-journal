@@ -25,6 +25,8 @@ lib.dialog('/', [
 
             const usernameOrEmail = find.call(this, ...[entities, 'username']) || find.call(this, ...[entities, 'builtin.email']);
 
+            session.dialogData.args = args;
+
             if (usernameOrEmail) {
                 next({
                     response: usernameOrEmail
@@ -82,16 +84,15 @@ lib.dialog('/', [
                     session.send(`Ok. I dropped you a mail to ${email}.`);
                     next();
                 }).catch((ex) => {
-                    session.send(`Oops! Something went wrong with the email. Shame on us (facepalm). Let's start over.`);
-                    session.replaceDialog('/signin', session.dialogData);
+                    session.send(`Oops! Something went wrong with the email. Shame on us (facepalm). Let's start over.`)
+                        .replaceDialog('/', session.dialogData.args);
                 });
-
         },
+
         (session) => {
-
             builder.Prompts.text(session, `What's the *secret code* in it?`);
-
         },
+
         (session, results, next) => {
 
             const {
@@ -100,13 +101,12 @@ lib.dialog('/', [
             const confirmCode = results.response;
 
             if (confirmCode !== secretCode) {
-                session.send(`That's not the Secret Code I sent you (wonder). Let's start over.`);
-                return session.replaceDialog('/signin');
+                return session.send(`That's not the Secret Code I sent you (wonder). Let's start over.`)
+                    .replaceDialog('/', session.dialogData.args);
             }
-
             next();
-
         },
+
         (session) => {
 
             const {
