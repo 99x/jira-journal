@@ -46,25 +46,29 @@ lib.dialog('/', [
         },
 
         (session, results) => {
-            const {
-                task,
-                project
-            } = results.response;
 
-            session.dialogData.task = task;
-            session.dialogData.project = project;
-
+            if (!results.response) {
+                return session.endDialog();
+            }
+            session.dialogData.task = results.response.task;
+            session.dialogData.project = results.response.project;
             session.beginDialog('/time-spent', session.dialogData.args);
         },
 
         (session, results) => {
 
+            if (!results.response) {
+                return session.endDialog();
+            }
             session.dialogData.timeSpent = results.response
             session.beginDialog('/date-started', session.dialogData.args);
         },
 
         (session, results, next) => {
 
+            if (!results.response) {
+                return session.endDialog();
+            }
             session.dialogData.dateStarted = results.response;
             session.beginDialog('/persist', session.dialogData);
         }
@@ -89,7 +93,10 @@ lib.dialog('/task', [
                     response: String.prototype.replace.call(task, /\s/g, '')
                 });
             } else {
-                session.endDialog(`I don't know *what task* to log (worry)`);
+                session.send(`I don't know *what task* to log (worry)`)
+                    .endDialogWithResult({
+                        resumed: builder.ResumeReason.notCompleted
+                    });
             }
         },
 
@@ -100,7 +107,7 @@ lib.dialog('/task', [
 
             auth.authorize(usernameOrEmail, task)
                 .then((response) => {
-                    next({
+                    session.endDialogWithResult({
                         response: {
                             project: response.project,
                             task,
@@ -114,20 +121,26 @@ lib.dialog('/task', [
 
                     switch (statusCode) {
                         case 401:
-                            session.endDialog(`Oops! Looks like you don't have access to that project. Talk to IT Services.`);
+                            session.send(`Oops! Looks like you don't have access to that project. Talk to IT Services.`)
+                                .endDialogWithResult({
+                                    resumed: builder.ResumeReason.notCompleted
+                                });
                             break;
                         case 404:
-                            session.endDialog(`Oops! Cannot find that task. May be it doesn't exists or not created yet.`);
+                            session.send(`Oops! Cannot find that task. May be it doesn't exists or not created yet.`)
+                                .endDialogWithResult({
+                                    resumed: builder.ResumeReason.notCompleted
+                                });
                             break;
                         default:
-                            session.endDialog(`Oops! Something went wrong. Shame on us! Try a bit later.`);
+                            session.send(`Oops! Something went wrong. Shame on us! Try a bit later.`)
+                                .endDialogWithResult({
+                                    resumed: builder.ResumeReason.notCompleted
+                                });
+
                             break;
                     }
                 });
-        },
-
-        (session, results) => {
-            session.endDialogWithResult(results);
         }
     ])
     .cancelAction('/task-cancel', '(y)', {
@@ -135,7 +148,7 @@ lib.dialog('/task', [
     });
 
 lib.dialog('/time-spent', [
-        (session, args, next) => {
+        (session, args) => {
             const {
                 entities
             } = args.intent;
@@ -145,15 +158,15 @@ lib.dialog('/time-spent', [
             const timeSpent = findTimePart.call(this, ...[entities]);
 
             if (timeSpent) {
-                next({
+                session.endDialogWithResult({
                     response: timeSpent
                 });
             } else {
-                session.send(`I don't know how much *time you spent*.`);
+                session.send(`I don't know how much *time you spent*.`)
+                    .endDialogWithResult({
+                        resumed: builder.ResumeReason.notCompleted
+                    });
             }
-        },
-        (session, results) => {
-            session.endDialogWithResult(results);
         }
     ])
     .cancelAction('/time-spent-cancel', '(y)', {
@@ -169,15 +182,15 @@ lib.dialog('/date-started', [
             const dateStarted = findDatePart.call(this, ...[entities]);
 
             if (dateStarted) {
-                next({
+                session.endDialogWithResult({
                     response: dateStarted.toISOString().replace('Z', '+0000')
                 });
             } else {
-                return session.endDialog(`Sorry! I don't know *when you started* it (worry)`)
+                return session.send(`Sorry! I don't know *when you started* it (worry)`)
+                    .endDialogWithResult({
+                        resumed: builder.ResumeReason.notCompleted
+                    });
             }
-        },
-        (session, results) => {
-            session.endDialogWithResult(results);
         }
     ])
     .cancelAction('/date-started-cancel', '(y)', {
@@ -221,15 +234,24 @@ lib.dialog('/persist', [
 
                 switch (statusCode) {
                     case 401:
-                        session.endDialog(`Your JIRA credentials no longer working, ${name}. Just talk to IT Services about it.`);
+                        session.send(`Your JIRA credentials no longer working, ${name}. Just talk to IT Services about it.`)
+                            .endDialogWithResult({
+                                resumed: builder.ResumeReason.notCompleted
+                            });
                         break;
 
                     case 404:
-                        session.endDialog(`Oops! ${task} task doesn't exists or you don't have permission, ${name}.`);
+                        session.send(`Oops! ${task} task doesn't exists or you don't have permission, ${name}.`)
+                            .endDialogWithResult({
+                                resumed: builder.ResumeReason.notCompleted
+                            });
                         break;
 
                     default:
-                        session.endDialog(`Oops! Something went wrong. Shame on us (facepalm). Let's try again in few mins.`);
+                        session.send(`Oops! Something went wrong. Shame on us (facepalm). Let's try again in few mins.`)
+                            .endDialogWithResult({
+                                resumed: builder.ResumeReason.notCompleted
+                            });
                         break;
                 }
             });
