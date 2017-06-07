@@ -12,27 +12,19 @@ lib.dialog('/', [
                 .images([
                     builder.CardImage.create(session, 'https://github.com/99xt/jira-journal/wiki/icon.png')
                 ]);
-
             const reply = new builder.Message(session)
                 .attachmentLayout(builder.AttachmentLayout.list)
                 .attachments([card]);
 
             session.send(reply);
 
-            const {
-                name
-            } = session.message.user;
+            session.beginDialog('/greet:/');
+        },
 
-            if (!session.userData.profile) {
-                session.send(`Hey ${name}... first things first, you need to sign in, in order to do following things`);
-            } else {
-                const email = session.userData.profile.emailAddress;
-                session.send(`Hay ${name}... looks like you already signed in as **${email}**, so you can do following things`);
-            }
-            session.send(`* Type **sign in** so I could log all your time report entries to JIRA.\n* Type **reset** and I will lose all the sweet memories we had together and we can start all over.\n* Type **who am I?** to figure out how much I know about you ;)`);
-            session.send(`Now let's get down to what I can do with your JIRA instances.\n* Type **recent** and I will list all your recent JIRA Tasks.\n* Type **my tasks** and I will list all the JIRA tasks assigned to you.`);
-            session.send(`Now, if you are wondering how to report time, it's like this... You just type what you have been done, and then use the **#tags** to mention the **JIRA Task, Day, and the Time you spent**, then just enter, and I will tell JIRA to note it down :)`);
-            session.endDialog(`Something like this... \n* _I just played with JIRA Journal Bot **#CIN-27 #3/27 #2d3h45m**_ OR \n* _**#CIN-27** Playing around the JIRA Journal Bot source **#yesterday #4.5h**_`);
+        (session, args, next) => {
+            session.send(`* Type **sign in** or **sign in as _your domain username/email address_** so I could log all your time report entries to JIRA.\n* Type **reset** and I will lose all the sweet memories we had together and we can start all over.\n* Type **who am I?** to figure out how much I know about you ;)`);
+            session.send(`Now, if you are wondering how to report time, it's like this... You just type what you have been working, mention the **JIRA Task, Day, and the Time you spent** but the order really doesnt matter. I will tell JIRA to note it down :)`);
+            session.endDialog(`For example... \n* _**CIN-27** **5/23** I just played with JIRA Journal Bot for **1h 30m**_ OR \n* _**CIN-27** Playing around the JIRA Journal Bot source **yesterday 4.5h**_ OR \n* _**Today** Troubleshooting my shame code for about **6h CIN-27**_`);
         }
     ])
     .triggerAction({

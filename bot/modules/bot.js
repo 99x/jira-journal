@@ -6,6 +6,7 @@ const logger = require('./middleware/logger');
 const recognizer = require('./middleware/recognizer');
 
 const worklog = require('./dialogs/worklog');
+const greet = require('./dialogs/greet');
 const help = require('./dialogs/help');
 const signin = require('./dialogs/signin');
 const reset = require('./dialogs/reset');
@@ -24,6 +25,7 @@ bot.set('persistConversationData', true);
 bot.recognizer(recognizer.luis);
 
 bot.library(worklog.createNew());
+bot.library(greet.createNew());
 bot.library(help.createNew());
 bot.library(signin.createNew());
 bot.library(reset.createNew());
