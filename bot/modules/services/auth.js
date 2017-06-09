@@ -48,8 +48,6 @@ const getRequestOptions = (urlStub, payload) => {
         json: payload
     };
 
-    //console.log('Request Options: ', JSON.stringify(options));
-
     return options;
 };
 
@@ -58,7 +56,6 @@ const handleFailure = (error) => {
     let {
         statusCode
     } = error, message;
-    //console.log('Exception Occured: ', JSON.stringify(arguments));
 
     if (!statusCode) {
         message = error.message;

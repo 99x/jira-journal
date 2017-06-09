@@ -10,15 +10,13 @@ module.exports = exports = {
 
 // adds a new worklog under a particular issue key
 function addWorklog(jiraOptions, issueKey, worklog, callback) {
-    let urlStub = `issue/${issueKey}/worklog`;
-    let options = _getRequestOptions(jiraOptions, urlStub, worklog);
-
-    //console.log('Add worklog: ', JSON.stringify(options));
+    const urlStub = `issue/${issueKey}/worklog`;
+    const options = _getRequestOptions(jiraOptions, urlStub, worklog);
 
     return request
         .post(options)
         .then((response) => {
-            let newWorklogId = response.id;
+            const newWorklogId = response.id;
 
             return newWorklogId;
         })
@@ -27,11 +25,11 @@ function addWorklog(jiraOptions, issueKey, worklog, callback) {
 
 // gets the issues that are assigned to a particular user
 function getAssignedIssues(jiraOptions) {
-    let urlStub = `search?jql=assignee=${jiraOptions.username}&fields=summary`;
-    let options = _getRequestOptions(jiraOptions, urlStub);
+    const urlStub = `search?jql=assignee=${jiraOptions.username}&fields=summary`;
+    const options = _getRequestOptions(jiraOptions, urlStub);
 
     return request.get(options).then((response) => {
-        let issues = _summarizeIssues(JSON.parse(response));
+        const issues = _summarizeIssues(JSON.parse(response));
 
         return issues;
     }).catch(_handleFailure);
@@ -39,12 +37,12 @@ function getAssignedIssues(jiraOptions) {
 
 // gets the issues that a particular user has recently logged time under
 function getRecentIssues(jiraOptions, days, callback) {
-    let urlStub = `search?jql=worklogAuthor=${jiraOptions.username}
+    const urlStub = `search?jql=worklogAuthor=${jiraOptions.username}
      AND worklogDate >= -${days}d&fields=summary`;
-    let options = _getRequestOptions(jiraOptions, urlStub);
+    const options = _getRequestOptions(jiraOptions, urlStub);
 
     return request.get(options).then((response) => {
-        let issues = _summarizeIssues(JSON.parse(response));
+        const issues = _summarizeIssues(JSON.parse(response));
 
         return issues;
     }).catch(_handleFailure);
@@ -52,8 +50,8 @@ function getRecentIssues(jiraOptions, days, callback) {
 
 // generates the options object for HTTP requests
 function _getRequestOptions(jiraOptions, urlStub, payload) {
-    let url = `${jiraOptions.url}/rest/api/latest/${urlStub}`;
-    let {
+    const url = `${jiraOptions.url}/rest/api/latest/${urlStub}`;
+    const {
         username,
         password
     } = jiraOptions;
@@ -74,7 +72,7 @@ function _getRequestOptions(jiraOptions, urlStub, payload) {
 // flattens the list of issues to a key-summary list
 function _summarizeIssues(data) {
     return data.issues.map((issue) => {
-        let {
+        const {
             key,
             fields: {
                 summary
@@ -90,9 +88,10 @@ function _summarizeIssues(data) {
 
 // handles failure of HTTP requests
 function _handleFailure(error) {
-    let {
+    const {
         statusCode
-    } = error, message;
+    } = error;
+    let message;
 
     if (!statusCode) {
         message = error.message;

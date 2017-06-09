@@ -10,6 +10,7 @@ const find = (...args) => {
     const el = builder.EntityRecognizer.findEntity.call(this, ...args);
     return el ? el.entity : null;
 };
+
 const findTimePart = (entities) => {
     const entity = find.call(this, ...[entities, 'timeSpent']) || find.call(this, ...[entities, 'builtin.datetimeV2.duration']);
     if (entity) {
@@ -17,6 +18,7 @@ const findTimePart = (entities) => {
     }
     return null;
 };
+
 const findDatePart = (entities) => {
     const ResolutionProp = 'resolution';
 
@@ -41,6 +43,13 @@ const findDatePart = (entities) => {
 
 lib.dialog('/', [
         (session, args) => {
+
+            if (!session.userData.profile) {
+                return session.replaceDialog('greet:/');
+            }
+
+            console.log('Worklog :', JSON.stringify(args.intent.entities));
+
             session.dialogData.args = args;
             session.beginDialog('/task', args);
         },
@@ -70,7 +79,7 @@ lib.dialog('/', [
                 return session.endDialog();
             }
             session.dialogData.dateStarted = results.response;
-            session.beginDialog('/persist', session.dialogData);
+            session.beginDialog('/complete', session.dialogData);
         }
     ])
     .triggerAction({
@@ -104,6 +113,8 @@ lib.dialog('/task', [
 
             const usernameOrEmail = session.userData.profile.emailAddress;
             const task = results.response;
+
+            session.sendTyping();
 
             auth.authorize(usernameOrEmail, task)
                 .then((response) => {
@@ -153,8 +164,6 @@ lib.dialog('/time-spent', [
                 entities
             } = args.intent;
 
-            console.log('Time spent args: ', JSON.stringify(entities));
-
             const timeSpent = findTimePart.call(this, ...[entities]);
 
             if (timeSpent) {
@@ -197,7 +206,7 @@ lib.dialog('/date-started', [
         matches: [/^(cancel|nevermind)$/g]
     });
 
-lib.dialog('/persist', [
+lib.dialog('/complete', [
     (session, args) => {
 
         const {
@@ -217,7 +226,7 @@ lib.dialog('/persist', [
             timeSpent: timeSpent
         };
 
-        console.log('Add Worklog: ', project, task, worklog);
+        session.sendTyping();
 
         jira.addWorklog(project, task, worklog)
             .then((response) => {
