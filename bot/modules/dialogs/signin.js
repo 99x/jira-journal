@@ -25,15 +25,20 @@ lib.dialog('/', [
 
             const usernameOrEmail = find.call(this, ...[entities, 'username']) || find.call(this, ...[entities, 'builtin.email']);
 
-            session.dialogData.args = args;
-
-            if (usernameOrEmail) {
-                next({
-                    response: usernameOrEmail
-                });
-            } else {
-                builder.Prompts.text(session, `What's your domain username or office email address, ${name}?`);
+            if (!usernameOrEmail) {
+                // session.send(`What's your domain username or office email address, ${name}?`)
+                //     .beginDialog('/prompt-email');
+                // builder.Prompts.customize(builder.PromptType.text, lib.dialog('/prompt-email'));
+                // builder.Prompts.text(session, `What's your domain username or office email address, ${name}?`, {
+                //     textFormat: 'plain'
+                // });
+                return session.endDialog(`You need to mention your domain username or email address also!`);
             }
+
+            session.dialogData.args = args;
+            next({
+                response: usernameOrEmail
+            });
         },
 
         (session, results, next) => {
@@ -128,7 +133,9 @@ lib.dialog('/', [
                     ])
             });
             const message = new builder.Message(session).attachmentLayout(builder.AttachmentLayout.carousel).attachments(jiraCards);
-            session.endDialog(message);
+            session.send(message)
+                .send(`(y)`)
+                .endDialog();
         }
     ])
     .triggerAction({
@@ -137,6 +144,25 @@ lib.dialog('/', [
     .cancelAction('/signin-cancel', '(y)', {
         matches: [/^(cancel|nevermind)$/g]
     });
+
+// lib.dialog('/prompt-email', new builder.SimpleDialog((session, args) => {
+//         const email = session.message.text;
+
+//         if (!session.dialogData.forwarded) {
+//             session.dialogData.forwarded = true;
+//             session.sendBatch();
+//             return;
+//         }
+//         if (session.message.text) {
+//             console.log(session.message);
+//             session.endDialogWithResult({
+//                 response: email
+//             });
+//         }
+//     }))
+//     .cancelAction('/prompt-email-cancel', '(y)', {
+//         matches: [/^(cancel|nevermind)$/g]
+//     });
 
 module.exports = exports = {
     createNew: () => {
