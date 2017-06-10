@@ -17,22 +17,20 @@ lib.dialog('/', [
         (session, args, next) => {
 
             const {
-                name
-            } = session.message.user;
-            const {
                 entities
             } = args.intent;
 
             const usernameOrEmail = find.call(this, ...[entities, 'username']) || find.call(this, ...[entities, 'builtin.email']);
 
             if (!usernameOrEmail) {
-                // session.send(`What's your domain username or office email address, ${name}?`)
+                // session.send(`What's your domain username or office email address, ${goodname}?`)
                 //     .beginDialog('/prompt-email');
                 // builder.Prompts.customize(builder.PromptType.text, lib.dialog('/prompt-email'));
-                // builder.Prompts.text(session, `What's your domain username or office email address, ${name}?`, {
+                // builder.Prompts.text(session, `What's your domain username or office email address, ${goodname}?`, {
                 //     textFormat: 'plain'
                 // });
-                return session.endDialog(`You need to mention your domain username or email address also!`);
+                return session.send(`You need to mention your domain username also!`)
+                    .endDialog();
             }
 
             session.dialogData.args = args;
@@ -48,9 +46,15 @@ lib.dialog('/', [
             auth
                 .authenticate(usernameOrEmail)
                 .then((response) => {
+                    const {
+                        name
+                    } = response.profile;
+                    response.profile.goodname = name.split(' ').slice(0, -1).join(' ');
+
                     session.dialogData.profile = response.profile;
                     session.dialogData.jira = response.instances;
                     next();
+
                 }).catch((ex) => {
                     const {
                         statusCode
@@ -58,25 +62,29 @@ lib.dialog('/', [
 
                     switch (statusCode) {
                         case 404:
-                            session.endDialog(`Looks like you are not in seranet. Talk to IT Services to see what's going on.`);
+                            session.send(`Looks like you are not in seranet. Talk to IT Services to see what's going on.`);
                             break;
                         default:
-                            session.endDialog(`Oops! Something went wrong. Shame on us (facepalm). Let's start over.`);
+                            session.send(`Oops! Something went wrong. Shame on us (facepalm). Let's start over.`);
                             break;
                     }
+
+                    session.endDialogWithResult({
+                        resumed: builder.ResumeReason.notCompleted
+                    });
                 });
         },
 
         (session, results, next) => {
 
             const {
-                name
-            } = session.message.user;
-            const email = session.dialogData.profile.emailAddress;
+                name,
+                emailAddress
+            } = session.dialogData.profile;
             const secretCode = session.dialogData.secretCode = secrets.whisper();
 
             const draft = {
-                to: `${name} <${email}>`,
+                to: `${name} <${emailAddress}>`,
                 subject: `Your Secret Code: ${secretCode}`,
                 text: `You just tryed to sign in with JIRA Journal. Here's your Secret Code: ${secretCode}`,
                 html: `You just tryed to sign in with JIRA Journal. Here's your <b>Secret Code: ${secretCode}</b>`
@@ -86,7 +94,7 @@ lib.dialog('/', [
 
             sendmail.compose(draft)
                 .then(() => {
-                    session.send(`Ok. I dropped you a mail to ${email}.`);
+                    session.send(`Ok. I dropped you a mail to ${emailAddress}.`);
                     next();
                 }).catch((ex) => {
                     session.send(`Oops! Something went wrong with the email. Shame on us (facepalm). Let's start over.`)
@@ -121,7 +129,8 @@ lib.dialog('/', [
             session.userData = session.dialogData;
 
             if (jira.length == 0) {
-                return session.endDialog('(y)');
+                return session.send('(y)')
+                    .endDialog();
             }
 
             const jiraCards = jira.map((entity) => {
@@ -132,6 +141,7 @@ lib.dialog('/', [
                         builder.CardAction.openUrl(session, entity.url, 'Learn More')
                     ])
             });
+
             const message = new builder.Message(session).attachmentLayout(builder.AttachmentLayout.carousel).attachments(jiraCards);
             session.send(message)
                 .send(`(y)`)
