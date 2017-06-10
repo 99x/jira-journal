@@ -111,12 +111,14 @@ lib.dialog('/task', [
 
         (session, results, next) => {
 
-            const usernameOrEmail = session.userData.profile.emailAddress;
             const task = results.response;
+            const {
+                emailAddress
+            } = session.userData.profile;
 
             session.sendTyping();
 
-            auth.authorize(usernameOrEmail, task)
+            auth.authorize(emailAddress, task)
                 .then((response) => {
                     session.endDialogWithResult({
                         response: {
@@ -132,25 +134,19 @@ lib.dialog('/task', [
 
                     switch (statusCode) {
                         case 401:
-                            session.send(`Oops! Looks like you don't have access to that project. Talk to IT Services.`)
-                                .endDialogWithResult({
-                                    resumed: builder.ResumeReason.notCompleted
-                                });
+                            session.send(`Oops! Looks like you don't have access to that project. Talk to IT Services.`);
                             break;
                         case 404:
-                            session.send(`Oops! Cannot find that task. May be it doesn't exists or not created yet.`)
-                                .endDialogWithResult({
-                                    resumed: builder.ResumeReason.notCompleted
-                                });
+                            session.send(`Oops! Cannot find that task. May be it doesn't exists or not created yet.`);
                             break;
                         default:
-                            session.send(`Oops! Something went wrong. Shame on us! Try a bit later.`)
-                                .endDialogWithResult({
-                                    resumed: builder.ResumeReason.notCompleted
-                                });
-
+                            session.send(`Oops! Something went wrong. Shame on us! Try a bit later.`);
                             break;
                     }
+
+                    session.endDialogWithResult({
+                        resumed: builder.ResumeReason.notCompleted
+                    });
                 });
         }
     ])
@@ -230,7 +226,8 @@ lib.dialog('/complete', [
 
         jira.addWorklog(project, task, worklog)
             .then((response) => {
-                session.endDialog('(y)');
+                session.send('(y)')
+                    .endDialog();
             })
             .catch((error) => {
                 const {
@@ -238,31 +235,26 @@ lib.dialog('/complete', [
                 } = error;
 
                 const {
-                    name
-                } = session.message.user;
+                    goodname
+                } = session.userData.profile;
 
                 switch (statusCode) {
                     case 401:
-                        session.send(`Your JIRA credentials no longer working, ${name}. Just talk to IT Services about it.`)
-                            .endDialogWithResult({
-                                resumed: builder.ResumeReason.notCompleted
-                            });
+                        session.send(`Your JIRA credentials no longer working, ${goodname}. Just talk to IT Services about it.`);
                         break;
 
                     case 404:
-                        session.send(`Oops! ${task} task doesn't exists or you don't have permission, ${name}.`)
-                            .endDialogWithResult({
-                                resumed: builder.ResumeReason.notCompleted
-                            });
+                        session.send(`Oops! ${task} task doesn't exists or you don't have permission, ${goodname}.`);
                         break;
 
                     default:
-                        session.send(`Oops! Something went wrong. Shame on us (facepalm). Let's try again in few mins.`)
-                            .endDialogWithResult({
-                                resumed: builder.ResumeReason.notCompleted
-                            });
+                        session.send(`Oops! Something went wrong. Shame on us (facepalm). Let's try again in few mins.`);
                         break;
                 }
+
+                session.endDialogWithResult({
+                    resumed: builder.ResumeReason.notCompleted
+                });
             });
     }
 ]);
