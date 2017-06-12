@@ -22,21 +22,14 @@ lib.dialog('/', [
 
             const usernameOrEmail = find.call(this, ...[entities, 'username']) || find.call(this, ...[entities, 'builtin.email']);
 
-            if (!usernameOrEmail) {
-                // session.send(`What's your domain username or office email address, ${goodname}?`)
-                //     .beginDialog('/prompt-email');
-                // builder.Prompts.customize(builder.PromptType.text, lib.dialog('/prompt-email'));
-                // builder.Prompts.text(session, `What's your domain username or office email address, ${goodname}?`, {
-                //     textFormat: 'plain'
-                // });
-                return session.send(`You need to mention your domain username also!`)
-                    .endDialog();
-            }
-
             session.dialogData.args = args;
-            next({
-                response: usernameOrEmail
-            });
+            if (usernameOrEmail) {
+                next({
+                    response: usernameOrEmail
+                });
+            } else {
+                builder.Prompts.text(session, `What's your domain username?`);
+            }
         },
 
         (session, results, next) => {
@@ -154,25 +147,6 @@ lib.dialog('/', [
     .cancelAction('/signin-cancel', '(y)', {
         matches: [/^(cancel|nevermind)$/g]
     });
-
-// lib.dialog('/prompt-email', new builder.SimpleDialog((session, args) => {
-//         const email = session.message.text;
-
-//         if (!session.dialogData.forwarded) {
-//             session.dialogData.forwarded = true;
-//             session.sendBatch();
-//             return;
-//         }
-//         if (session.message.text) {
-//             console.log(session.message);
-//             session.endDialogWithResult({
-//                 response: email
-//             });
-//         }
-//     }))
-//     .cancelAction('/prompt-email-cancel', '(y)', {
-//         matches: [/^(cancel|nevermind)$/g]
-//     });
 
 module.exports = exports = {
     createNew: () => {
