@@ -45,7 +45,7 @@ lib.dialog('/', [
         (session, args) => {
 
             if (!session.userData.profile) {
-                return session.replaceDialog('greet:/');
+                return session.send(`Looks like you haven't signed in.`).replaceDialog('greet:/');
             }
 
             console.log('Worklog :', JSON.stringify(args.intent.entities));

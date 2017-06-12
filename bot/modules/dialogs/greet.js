@@ -20,7 +20,8 @@ lib.dialog('/', [
             }
 
             const [goodname] = session.message.user.name.split(EmptyOrWhitespace);
-            session.send(`Hello ${goodname}... Say **help** or something else...`);
+            session.send(`Hello ${goodname}... Say **help** or something else...`)
+                .endDialog();
         }
     ])
     .triggerAction({
@@ -44,12 +45,15 @@ lib.dialog('/firstrun', [
                 ]);
 
             session.userData.score = 1.0;
-            session.send(new builder.Message(session).attachments([welcomeCard])).endDialog();
+            session.send(new builder.Message(session).attachments([welcomeCard]))
+                .endDialog();
         }
     ])
     .triggerAction({
         onFindAction: (context, cb) => {
-            const score = context.userData.score || 0.0 < 1.0 ? 1.1 : 0.0;
+            console.log('First run score ', context.userData.score);
+            const score = (context.userData.score || 0.0) < 1.0 ? 1.1 : 0.0;
+            console.log('First run score returned ', score);
             cb(null, score);
         }
     });
