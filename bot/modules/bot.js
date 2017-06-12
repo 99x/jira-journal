@@ -20,7 +20,9 @@ const chatsettings = {
 
 const connector = new builder.ChatConnector(chatsettings);
 
-const bot = new builder.UniversalBot(connector, null, 'worklog:/');
+const bot = new builder.UniversalBot(connector, (session) => {
+    session.endDialog();
+});
 
 bot.set('persistConversationData', true);
 
@@ -41,20 +43,10 @@ bot.on('error', (data) => {
 });
 
 bot.on('contactRelationUpdate', (message) => {
-
     if (message.action === 'add') {
-
-        const welcomeCard = new builder.HeroCard()
-            .title('JIRA Journal Bot')
-            .subtitle('Your bullet journal - whatever you want to log.')
-            .text(`Hay ${message.user.name}... thanks for adding me. Say 'help' to see what I can do`)
-            .images([
-                new builder.CardImage().url('https://github.com/99xt/jira-journal/wiki/icon.png').alt('jira-jouranl-bot-logo')
-            ]);
-
-        bot.send(new builder.Message().address(message.address).addAttachment(welcomeCard));
+        // Handle by greet:/firstrun
     } else {
-        // delete their data
+        // Delete their data
     }
 });
 

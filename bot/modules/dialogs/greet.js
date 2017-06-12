@@ -2,33 +2,56 @@
 
 const builder = require('botbuilder');
 const lib = new builder.Library('greet');
+const EmptyOrWhitespace = /\s+/;
 
 lib.dialog('/', [
         (session, args, next) => {
+            const {
+                profile
+            } = session.userData;
 
-            if (session.userData.profile) {
+            if (profile) {
                 const {
                     goodname,
                     emailAddress
-                } = session.userData.profile;
-
-                return session.send(`Hay ${goodname}... looks like you are already signed in as **${emailAddress}** :)`)
-                    .send(`Type **reset** if that's not your email and we can start over.`)
-                    .send(`Or just type **help** to figure out what's next :)`)
+                } = profile;
+                return session.send(`Hi ${goodname} <${emailAddress}>... Say **help** or something else...`)
                     .endDialog();
             }
 
-            const {
-                name
-            } = session.message.user;
-            const goodname = name.split(' ').slice(0, -1).join(' ');
-
-            session.send(`Hay ${goodname}... looks like you haven't signed in yet. Say **sign in as _your domain username_** so we can proceed :)`)
-                .endDialog();
+            const [goodname] = session.message.user.name.split(EmptyOrWhitespace);
+            session.send(`Hello ${goodname}... Say **help** or something else...`);
         }
     ])
     .triggerAction({
         matches: ['/greet']
+    });
+
+lib.dialog('/firstrun', [
+        (session, args, next) => {
+
+            const [goodname] = session.message.user.name.split(EmptyOrWhitespace);
+
+            const welcomeCard = new builder.HeroCard()
+                .title('JIRA Journal Bot')
+                .subtitle('Your bullet journal - whatever you want to log.')
+                .text(`Hay ${goodname}... thanks for adding me. Say 'help' to see what I can do`)
+                .images([
+                    new builder.CardImage().url('https://github.com/99xt/jira-journal/wiki/icon.png').alt('jira-jouranl-bot-logo')
+                ])
+                .buttons([
+                    builder.CardAction.imBack(session, 'help', 'Help')
+                ]);
+
+            session.userData.score = 1.0;
+            session.send(new builder.Message(session).attachments([welcomeCard])).endDialog();
+        }
+    ])
+    .triggerAction({
+        onFindAction: (context, cb) => {
+            const score = context.userData.score || 0.0 < 1.0 ? 1.1 : 0.0;
+            cb(null, score);
+        }
     });
 
 module.exports = exports = {

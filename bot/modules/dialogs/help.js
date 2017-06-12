@@ -3,28 +3,72 @@
 const builder = require('botbuilder');
 const lib = new builder.Library('help');
 
-lib.dialog('/', [
-        (session, args, next) => {
+const helpers = [{
+        title: 'JIRA Journal Bot',
+        subtitle: 'Your bullet journal - whatever you want to log.',
+        image: 'https://github.com/99xt/jira-journal/wiki/icon.png',
+        trynow: 'hi'
+    },
+    {
+        title: 'Sign In',
+        subtitle: 'sign in as your-username',
+        description: 'Provide your domain username to verify available JIRA instances.',
+        image: 'https://github.com/99xt/jira-journal/wiki/icon.png',
+        trynow: 'sign in'
+    },
+    {
+        title: 'Time Report',
+        subtitle: 'I just played myself for 2h 30m Today CIN-27',
+        description: 'Report time on JIRA. Must mention the Task ID, the Date - mm/dd, Yesterday, or Today, - and the Spent time just like you do in JIRA.',
+        image: 'https://github.com/99xt/jira-journal/wiki/icon.png',
+        trynow: 'I just played myself for 2h 30m Today CIN-27'
+    },
+    {
+        title: 'My Tasks',
+        subtitle: 'what are my tasks?',
+        description: 'List 3-5 JIRA Tasks assigned to you.',
+        image: 'https://github.com/99xt/jira-journal/wiki/icon.png',
+        trynow: 'what are my tasks?'
+    },
+    {
+        title: 'Recent Tasks',
+        subtitle: 'what are my recent tasks?',
+        description: 'List 3-5 JIRA Tasks you recently used.',
+        image: 'https://github.com/99xt/jira-journal/wiki/icon.png',
+        trynow: 'what are my recent tasks?'
+    },
+    {
+        title: 'Delete Session',
+        subtitle: 'reset',
+        description: 'Sign out and clear all your cache from the bot. Note that whatever you have logged on JIRA will remain :P',
+        image: 'https://github.com/99xt/jira-journal/wiki/icon.png',
+        trynow: 'reset'
+    }
+];
 
-            const card = new builder.HeroCard(session)
-                .title('JIRA Journal Bot')
-                .text('Your bullet journal - whatever you want to log.')
-                .images([
-                    builder.CardImage.create(session, 'https://github.com/99xt/jira-journal/wiki/icon.png')
-                ]);
+lib.dialog('/', [
+        (session) => {
+
+            const helperCards = helpers.map((yelp) => {
+                return new builder.HeroCard(session)
+                    .title(yelp.title)
+                    .subtitle(yelp.subtitle)
+                    .text(yelp.description || '')
+                    .images([
+                        builder.CardImage.create(session, yelp.image).alt('jira-jouranl-bot-logo')
+                    ])
+                    .buttons([
+                        builder.CardAction.imBack(session, yelp.trynow, 'Try Now')
+                    ]);
+            });
+
             const reply = new builder.Message(session)
-                .attachmentLayout(builder.AttachmentLayout.list)
-                .attachments([card]);
+                .attachmentLayout(builder.AttachmentLayout.carousel)
+                .attachments(helperCards);
+
+            console.log(reply);
 
             session.send(reply)
-                .beginDialog('greet:/');
-        },
-
-        (session, args, next) => {
-            session.send(`* Say **sign in as _your domain username_** so we can proceed with JIRA authentication.\n* Type **reset** and I will lose all the sweet memories we had together and we can start all over ;)`)
-                .send(`Now, if you are wondering how to report time, it's like this... You just type what you have been working, mention the **JIRA Task, Day, and the Time you spent** but the order really doesnt matter. I will tell JIRA to note it down :)`)
-                .send(`For example... \n* _**CIN-27** **5/23** I just played with JIRA Journal Bot for **1h 30m**_ OR \n* _**CIN-27** Playing around the JIRA Journal Bot source **yesterday 4.5h**_ OR \n* _**Today** Troubleshooting my shame code for about **6h CIN-27**_`)
-                .send(`Just say **nevermind** to start over at any time.`)
                 .endDialog();
         }
     ])
