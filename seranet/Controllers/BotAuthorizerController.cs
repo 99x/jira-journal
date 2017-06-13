@@ -46,7 +46,7 @@ namespace Workplace.Eureka.Services.Controllers
                     return NotFound(new { username });
                 }
 
-                const string GetJiraAccountsSql = @"SELECT JiraAccounts.account [Name], JiraAccounts.description [Description], JiraUserData.jira_url [Url] 
+                const string GetJiraAccountsSql = @"SELECT JiraAccounts.account [Name], JiraAccounts.description [Description], JiraUserData.jira_url [Url], JiraUserData.external_user_name [Username], JiraUserData.password [Password] 
                                                                             FROM dbo.JiraAccounts INNER JOIN dbo.JiraUserData 
                                                                                 ON JiraAccounts.account_id = JiraUserData.account_id
                                                                             WHERE JiraUserData.is_deleted = 0 AND JiraUserData.user_id IN
@@ -58,7 +58,9 @@ namespace Workplace.Eureka.Services.Controllers
                                                       {
                                                           Name = model.Name,
                                                           Description = model.Description,
-                                                          Url = decypher.Decrypts(model.Url)
+                                                          Url = decypher.Decrypts(model.Url),
+                                                          Username = decypher.Decrypts(model.Username),
+                                                          Password = decypher.Decrypts(model.Password)
                                                       });
 
                 return Ok(new
