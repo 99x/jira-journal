@@ -59,6 +59,7 @@ lib.dialog('/', [
                             break;
                         default:
                             session.send(`Oops! Something went wrong. Shame on us (facepalm). Let's start over.`);
+                            console.log('auth.authenticate exception:', JSON.stringify(ex));
                             break;
                     }
 
