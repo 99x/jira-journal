@@ -8,6 +8,8 @@ const auth = require('../services/auth');
 
 const lib = new builder.Library('signin');
 
+const EmptyOrWhitespace = /\s+/;
+
 const find = (...args) => {
     const el = builder.EntityRecognizer.findEntity.call(this, ...args);
     return el ? el.entity : null;
@@ -39,10 +41,8 @@ lib.dialog('/', [
             auth
                 .authenticate(usernameOrEmail)
                 .then((response) => {
-                    const {
-                        name
-                    } = response.profile;
-                    response.profile.goodname = name.split(' ').slice(0, -1).join(' ');
+                    const [goodname] = response.profile.name.split(EmptyOrWhitespace);
+                    response.profile.goodname = goodname;
 
                     session.dialogData.profile = response.profile;
                     session.dialogData.jira = response.instances;
@@ -115,11 +115,11 @@ lib.dialog('/', [
 
         (session) => {
 
+            session.userData = session.dialogData;
+
             const {
                 jira
-            } = session.dialogData;
-
-            session.userData = session.dialogData;
+            } = session.userData;
 
             if (jira.length == 0) {
                 return session.send('(y)')
@@ -130,13 +130,12 @@ lib.dialog('/', [
                 return new builder.HeroCard(session)
                     .title(entity.account)
                     .subtitle(entity.description)
-                    .buttons([
-                        builder.CardAction.openUrl(session, entity.url, 'Learn More')
+                    .tap(builder.CardAction.openUrl(session, entity.url, 'Open'))
+                    .images([
+                        builder.CardImage.create(session, 'https://github.com/99xt/jira-journal/wiki/icon.png').alt('jira-jouranl-bot-logo')
                     ])
             });
-
-            const message = new builder.Message(session).attachmentLayout(builder.AttachmentLayout.carousel).attachments(jiraCards);
-            session.send(message)
+            session.send(new builder.Message(session).attachmentLayout(builder.AttachmentLayout.carousel).attachments(jiraCards))
                 .send(`(y)`)
                 .endDialog();
         }
