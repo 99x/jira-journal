@@ -36,11 +36,12 @@ lib.dialog('/firstrun', [
             const welcomeCard = new builder.HeroCard()
                 .title('JIRA Journal Bot')
                 .subtitle('Your bullet journal - whatever you want to log.')
-                .text(`Hay ${goodname}... thanks for adding me. Say 'help' to see what I can do`)
+                .text(`Yow ${goodname}... thanks for adding me. Say 'help' to see what I can do`)
                 .images([
                     new builder.CardImage().url('https://github.com/99xt/jira-journal/wiki/icon.png').alt('jira-jouranl-bot-logo')
                 ])
                 .buttons([
+                    builder.CardAction.openUrl(session, 'https://github.com/99xt/jira-journal', 'Github'),
                     builder.CardAction.imBack(session, 'help', 'Help')
                 ]);
 
@@ -51,9 +52,7 @@ lib.dialog('/firstrun', [
     ])
     .triggerAction({
         onFindAction: (context, cb) => {
-            console.log('First run score ', context.userData.score);
             const score = (context.userData.score || 0.0) < 1.0 ? 1.1 : 0.0;
-            console.log('First run score returned ', score);
             cb(null, score);
         }
     });
