@@ -7,6 +7,7 @@ const recognizer = require('./middleware/recognizer');
 
 const assigned = require('./dialogs/assigned');
 const recent = require('./dialogs/recent');
+const search = require('./dialogs/search');
 const worklog = require('./dialogs/worklog');
 const greet = require('./dialogs/greet');
 const help = require('./dialogs/help');
@@ -30,6 +31,7 @@ bot.recognizer(recognizer.luis);
 
 bot.library(assigned.createNew());
 bot.library(recent.createNew());
+bot.library(search.createNew());
 bot.library(worklog.createNew());
 bot.library(greet.createNew());
 bot.library(help.createNew());
