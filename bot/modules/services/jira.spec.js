@@ -5,10 +5,19 @@ require('dotenv-extended').load();
 const jira = require("./jira");
 
 const jiraOptions = {
-    url: "https://myjira.atlassian.net",
-    username: "user",
+    url: "https://jirainstance.atlassian.net",
+    username: "username",
     password: "password"
-}
+};
+
+// search for jira tasks
+jira.searchIssues(jiraOptions, 'compello')
+    .then((issues) => {
+        console.log(issues);
+    })
+    .catch((error) => {
+        console.log(error);
+    });
 
 // list all issues assigned to the user
 jira.getAssignedIssues(jiraOptions).then((issues) => {

@@ -5,7 +5,8 @@ const request = require("request-promise-native");
 module.exports = exports = {
     addWorklog,
     getAssignedIssues,
-    getRecentIssues
+    getRecentIssues,
+    searchIssues
 };
 
 // adds a new worklog under a particular issue key
@@ -28,11 +29,13 @@ function getAssignedIssues(jiraOptions) {
     const urlStub = `search?jql=assignee=${jiraOptions.username}&fields=summary`;
     const options = _getRequestOptions(jiraOptions, urlStub);
 
-    return request.get(options).then((response) => {
-        const issues = _summarizeIssues(JSON.parse(response));
+    return request.get(options)
+        .then((response) => {
+            const issues = _summarizeIssues(JSON.parse(response));
 
-        return issues;
-    }).catch(_handleFailure);
+            return issues;
+        })
+        .catch(_handleFailure);
 }
 
 // gets the issues that a particular user has recently logged time under
@@ -41,11 +44,27 @@ function getRecentIssues(jiraOptions, days, callback) {
      AND worklogDate >= -${days}d&fields=summary`;
     const options = _getRequestOptions(jiraOptions, urlStub);
 
-    return request.get(options).then((response) => {
-        const issues = _summarizeIssues(JSON.parse(response));
+    return request.get(options)
+        .then((response) => {
+            const issues = _summarizeIssues(JSON.parse(response));
 
-        return issues;
-    }).catch(_handleFailure);
+            return issues;
+        })
+        .catch(_handleFailure);
+}
+
+// search the issues that matches the project
+function searchIssues(jiraOptions, project, callback) {
+    const urlStub = `search?jql=project%20in%20(${project})&fields=summary`;
+    const options = _getRequestOptions(jiraOptions, urlStub);
+
+    return request.get(options)
+        .then((response) => {
+            const issues = _summarizeIssues(JSON.parse(response));
+
+            return issues;
+        })
+        .catch(_handleFailure);
 }
 
 // generates the options object for HTTP requests
