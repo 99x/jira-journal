@@ -38,6 +38,13 @@ const helpers = [{
         trynow: 'what are my recent tasks?'
     },
     {
+        title: 'Search Tasks',
+        subtitle: `what are the Compello tasks?`,
+        description: 'Search 3-5 JIRA Tasks matching Compello.',
+        image: 'https://github.com/99xt/jira-journal/wiki/icon.png',
+        trynow: `what are the Compello tasks?`
+    },
+    {
         title: 'Delete Session',
         subtitle: 'reset',
         description: 'Sign out and clear all your cache from the bot. Note that whatever you have logged on JIRA will remain :P',
