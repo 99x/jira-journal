@@ -117,6 +117,7 @@ lib.dialog('/', [
         (session) => {
 
             session.userData = session.dialogData;
+            session.save();
 
             const {
                 jira
