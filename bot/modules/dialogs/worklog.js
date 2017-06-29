@@ -6,6 +6,10 @@ const auth = require('../services/auth');
 
 const lib = new builder.Library('worklog');
 
+const empty = (arr) => {
+    return !arr || arr.length === 0;
+};
+
 const find = (...args) => {
     const el = builder.EntityRecognizer.findEntity.call(this, ...args);
     return el ? el.entity : null;
@@ -46,9 +50,9 @@ lib.dialog('/', [
 
             if (!session.userData.profile) {
                 return session.send(`Looks like you haven't signed in.`).replaceDialog('greet:/');
+            } else if (empty.call(this, ...session.userData.jira)) {
+                return session.send(`Looks like you don't have JIRA access.`).replaceDialog('greet:/');
             }
-
-            console.log('Worklog :', JSON.stringify(args.intent.entities));
 
             session.dialogData.args = args;
             session.beginDialog('/task', args);
@@ -57,7 +61,9 @@ lib.dialog('/', [
         (session, results) => {
 
             if (!results.response) {
-                return session.endDialog();
+                return session.endDialogWithResult({
+                    resumed: builder.ResumeReason.notCompleted
+                });
             }
             session.dialogData.task = results.response.task;
             session.dialogData.project = results.response.project;
@@ -67,7 +73,9 @@ lib.dialog('/', [
         (session, results) => {
 
             if (!results.response) {
-                return session.endDialog();
+                return session.endDialogWithResult({
+                    resumed: builder.ResumeReason.notCompleted
+                });
             }
             session.dialogData.timeSpent = results.response
             session.beginDialog('/date-started', session.dialogData.args);
@@ -76,7 +84,9 @@ lib.dialog('/', [
         (session, results, next) => {
 
             if (!results.response) {
-                return session.endDialog();
+                return session.endDialogWithResult({
+                    resumed: builder.ResumeReason.notCompleted
+                });
             }
             session.dialogData.dateStarted = results.response;
             session.beginDialog('/complete', session.dialogData);
