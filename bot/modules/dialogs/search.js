@@ -3,7 +3,22 @@
 const builder = require('botbuilder');
 const lib = new builder.Library('search');
 
+const empty = (arr) => {
+    return !arr || arr.length === 0;
+};
+
 lib.dialog('/', [
+        (session, args, next) => {
+
+            if (!session.userData.profile) {
+                return session.send(`Looks like you haven't signed in.`).replaceDialog('greet:/');
+            } else if (empty.call(this, ...session.userData.jira)) {
+                return session.send(`Looks like you don't have JIRA access.`).replaceDialog('greet:/');
+            }
+
+            next();
+        },
+
         (session) => {
 
             const {
@@ -11,7 +26,7 @@ lib.dialog('/', [
             } = session.message.user;
             const goodname = name.split(' ').slice(0, -1).join(' ');
 
-            session.send(`Patience ${goodname}... I am working on **search**. So for now, just go figure :P`)
+            session.send(`Patience ${goodname}... I am working on it. So for now, just go figure :P`)
                 .endDialog();
         }
     ])
