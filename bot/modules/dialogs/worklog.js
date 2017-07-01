@@ -81,7 +81,7 @@ lib.dialog('/', [
             session.beginDialog('/date-started', session.dialogData.args);
         },
 
-        (session, results, next) => {
+        (session, results) => {
 
             if (!results.response) {
                 return session.endDialogWithResult({
@@ -119,7 +119,7 @@ lib.dialog('/task', [
             }
         },
 
-        (session, results, next) => {
+        (session, results) => {
 
             const task = results.response;
             const {
@@ -189,7 +189,7 @@ lib.dialog('/time-spent', [
     });
 
 lib.dialog('/date-started', [
-        (session, args, next) => {
+        (session, args) => {
 
             const {
                 entities
