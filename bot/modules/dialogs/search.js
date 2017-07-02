@@ -59,7 +59,7 @@ lib.dialog('/prepare', [
                 response: query
             });
         } else {
-            session.send(`I couldn't figure out what to search (worry)`)
+            session.send(`I couldn't figure out what to search (wasntme)`)
                 .endDialogWithResult({
                     resumed: builder.ResumeReason.notCompleted
                 });
@@ -72,7 +72,7 @@ lib.dialog('/prepare', [
         const queries = session.userData.jira.map((instance) => {
             return {
                 criteria: query,
-                options: instance
+                project: instance
             };
         });
 
@@ -90,12 +90,12 @@ lib.dialog('/query', [
 
         const query = session.dialogData.queries[session.dialogData.current];
 
-        jira.searchIssues(query.options, query.criteria)
+        jira.searchIssues(query.project, query.criteria)
             .then((response) => {
                 response = response || [];
 
                 query.results = response.map((issue) => {
-                        return `* ${issue.id} - ${issue.title}`;
+                        return `* ${issue.key} - ${issue.summary}`;
                     })
                     .join('\n');
 
@@ -127,7 +127,7 @@ lib.dialog('/complete', [
         let message = '';
 
         response.map((query) => {
-                return `${query.options.account}${'\n'}${query.results}${'\n'}`;
+                return `${query.project.account}${'\n'}${query.results}${'\n'}`;
             })
             .join('');
 
