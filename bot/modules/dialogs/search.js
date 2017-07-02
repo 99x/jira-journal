@@ -1,14 +1,20 @@
 'use strict';
 
 const builder = require('botbuilder');
+const jira = require('../services/jira');
 const lib = new builder.Library('search');
 
 const empty = (arr) => {
     return !arr || arr.length === 0;
 };
 
+const find = (...args) => {
+    const el = builder.EntityRecognizer.findEntity.call(this, ...args);
+    return el ? el.entity : null;
+};
+
 lib.dialog('/', [
-        (session, args, next) => {
+        (session, args) => {
 
             if (!session.userData.profile) {
                 return session.send(`Looks like you haven't signed in.`).replaceDialog('greet:/');
@@ -16,23 +22,119 @@ lib.dialog('/', [
                 return session.send(`Looks like you don't have JIRA access.`).replaceDialog('greet:/');
             }
 
-            next();
+            session.beginDialog('/prepare', args);
         },
 
-        (session) => {
+        (session, results) => {
+            if (!results.response) {
+                return session.endDialogWithResult({
+                    resumed: builder.ResumeReason.notCompleted
+                });
+            }
 
-            const {
-                name
-            } = session.message.user;
-            const goodname = name.split(' ').slice(0, -1).join(' ');
+            session.dialogData.queries = results.response;
+            session.beginDialog('/query', session.dialogData);
+        },
 
-            session.send(`Patience ${goodname}... I am working on it. So for now, just go figure :P`)
-                .endDialog();
+        (session, results) => {
+
+            if (!results.response) {
+                return session.endDialogWithResult({
+                    resumed: builder.ResumeReason.notCompleted
+                });
+            }
+            session.dialogData.results = results.response;
+            session.beginDialog('/complete', session.dialogData);
         }
     ])
     .triggerAction({
         matches: ['/search']
     });
+
+lib.dialog('/prepare', [
+    (session, args, next) => {
+        const query = find.call(this, ...[args.intent.entities, 'query']);
+        if (query) {
+            next({
+                response: query
+            });
+        } else {
+            session.send(`I couldn't figure out what to search (worry)`)
+                .endDialogWithResult({
+                    resumed: builder.ResumeReason.notCompleted
+                });
+        }
+    },
+
+    (session, results) => {
+        const query = results.response;
+
+        const queries = session.userData.jira.map((instance) => {
+            return {
+                criteria: query,
+                options: instance
+            };
+        });
+
+        session.endDialogWithResult({
+            response: queries
+        });
+    }
+]);
+
+lib.dialog('/query', [
+    (session, args, next) => {
+
+        session.dialogData.queries = args.queries;
+        session.dialogData.current = args.current || 0;
+
+        const query = session.dialogData.queries[session.dialogData.current];
+
+        jira.searchIssues(query.options, query.criteria)
+            .then((response) => {
+                response = response || [];
+
+                query.results = response.map((issue) => {
+                        return `* ${issue.id} - ${issue.title}`;
+                    })
+                    .join('\n');
+
+                next();
+            })
+            .catch((error) => {
+                query.results = `* Couldn't find anything cause of this error ${error.statusCode}`;
+                next();
+            });
+    },
+
+    (session) => {
+        session.dialogData.current++;
+        if (session.dialogData.current >= session.dialogData.queries.length) {
+            return session.endDialogWithResult({
+                response: session.dialogData.queries
+            });
+        }
+        session.replaceDialog('/query', session.dialogData);
+    }
+]);
+
+lib.dialog('/complete', [
+    (session, args) => {
+
+        const {
+            response
+        } = args;
+        let message = '';
+
+        response.map((query) => {
+                return `${query.options.account}${'\n'}${query.results}${'\n'}`;
+            })
+            .join('');
+
+        session.send(message)
+            .endDialog();
+    }
+]);
 
 module.exports = exports = {
     createNew: () => {
