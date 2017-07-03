@@ -13,14 +13,12 @@ function addWorklog(jiraOptions, issueKey, worklog, callback) {
     const urlStub = `issue/${issueKey}/worklog`;
     const options = _getRequestOptions(jiraOptions, urlStub, worklog);
 
-    return request
-        .post(options)
-        .then((response) => {
+    return request.post(options).
+        then((response) => {
             const newWorklogId = response.id;
-
             return newWorklogId;
-        })
-        .catch(_handleFailure);
+        }).
+        catch(_handleFailure);
 }
 
 // gets the issues assigned to a particular user sorted by date of creation
@@ -28,11 +26,12 @@ function getAssignedIssues(jiraOptions) {
     const urlStub = `search?jql=assignee=${jiraOptions.username} ORDER BY createdDate DESC &fields=summary`;
     const options = _getRequestOptions(jiraOptions, urlStub);
 
-    return request.get(options).then((response) => {
-        const issues = _summarizeIssues(JSON.parse(response));
-
-        return issues;
-    }).catch(_handleFailure);
+    return request.get(options).
+        then((response) => {
+            const issues = _summarizeIssues(JSON.parse(response));
+            return issues;
+        }).
+        catch(_handleFailure);
 }
 
 // gets the issues that a particular user has recently logged time under sorted by date of update
@@ -41,11 +40,12 @@ function getRecentIssues(jiraOptions, days, callback) {
      AND worklogDate >= -${days}d ORDER BY updatedDate DESC&fields=summary`;
     const options = _getRequestOptions(jiraOptions, urlStub);
 
-    return request.get(options).then((response) => {
-        const issues = _summarizeIssues(JSON.parse(response));
-
-        return issues;
-    }).catch(_handleFailure);
+    return request.get(options).
+        then((response) => {
+            const issues = _summarizeIssues(JSON.parse(response));
+            return issues;
+        }).
+        catch(_handleFailure);
 }
 
 // generates the options object for HTTP requests
