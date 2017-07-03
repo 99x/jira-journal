@@ -23,9 +23,9 @@ function addWorklog(jiraOptions, issueKey, worklog, callback) {
         .catch(_handleFailure);
 }
 
-// gets the issues that are assigned to a particular user
+// gets the issues assigned to a particular user sorted by date of creation
 function getAssignedIssues(jiraOptions) {
-    const urlStub = `search?jql=assignee=${jiraOptions.username}&fields=summary`;
+    const urlStub = `search?jql=assignee=${jiraOptions.username} ORDER BY createdDate DESC &fields=summary`;
     const options = _getRequestOptions(jiraOptions, urlStub);
 
     return request.get(options).then((response) => {
@@ -35,10 +35,10 @@ function getAssignedIssues(jiraOptions) {
     }).catch(_handleFailure);
 }
 
-// gets the issues that a particular user has recently logged time under
+// gets the issues that a particular user has recently logged time under sorted by date of update
 function getRecentIssues(jiraOptions, days, callback) {
     const urlStub = `search?jql=worklogAuthor=${jiraOptions.username}
-     AND worklogDate >= -${days}d&fields=summary`;
+     AND worklogDate >= -${days}d ORDER BY updatedDate DESC&fields=summary`;
     const options = _getRequestOptions(jiraOptions, urlStub);
 
     return request.get(options).then((response) => {
