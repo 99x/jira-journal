@@ -26,6 +26,7 @@ lib.dialog('/', [
         },
 
         (session, results) => {
+
             if (!results.response) {
                 return session.endDialogWithResult({
                     resumed: builder.ResumeReason.notCompleted
@@ -121,13 +122,13 @@ lib.dialog('/query', [
 lib.dialog('/complete', [
     (session, args) => {
 
-        const {
-            response
-        } = args;
-        let message = '';
+        console.log('complete args', JSON.stringify(args.results));
 
-        response.map((query) => {
-                return `${query.project.account}${'\n'}${query.results}${'\n'}`;
+        const {
+            results
+        } = args;
+        const message = results.map((query) => {
+                return `${query.project.name}${'\n'}${query.results}${'\n'}`;
             })
             .join('');
 
