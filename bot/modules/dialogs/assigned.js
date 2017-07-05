@@ -1,23 +1,52 @@
 'use strict';
 
 const builder = require('botbuilder');
+const jira = require('../services/jira');
+
 const lib = new builder.Library('assigned');
+const maxTasks = 5;
 
-lib.dialog('/', [
-        (session) => {
+lib.dialog("/", [
+    (session) => {
+        session.beginDialog("fetchAssigned");
+    },
+    (session, results) => {
+        session.beginDialog("displayTasks", results.response);
+    }
+]);
 
-            const {
-                name
-            } = session.message.user;
-            const goodname = name.split(' ').slice(0, -1).join(' ');
+lib.dialog("fetchAssigned", [
+    (session) => {
+        const jiraOptions = {
+            url: "https://myjira.atlassian.net",
+            username: "user",
+            password: "password"
+        };
 
-            session.send(`Patience ${goodname}... I am working on it. So for now, just go figure :P`)
-                .endDialog();
+        jira.getAssignedIssues(jiraOptions).then((response) => {
+            let tasks = response.map((t) => {
+                return `${t.key} - ${t.summary}`;
+            });
+
+            session.endDialogWithResult({ response: tasks });
+        }).catch((ex) => {
+            session.send(ex);
+        });
+
+        session.sendTyping();
+    }
+]);
+
+lib.dialog("displayTasks", [
+    (session, args) => {
+        if (args.length === 0) {
+            session.endDialog("No tasks to show");
         }
-    ])
-    .triggerAction({
-        matches: ['/assigned']
-    });
+
+        session.send(args.join("\n"));
+        session.endDialog("That's all!");
+    }
+]);
 
 module.exports = exports = {
     createNew: () => {
