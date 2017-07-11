@@ -85,11 +85,15 @@ lib.dialog('/prepare', [
 
 lib.dialog('/query', [
     (session, args, next) => {
+        const {
+            goodname
+        } = session.userData.profile;
 
         session.dialogData.queries = args.queries;
         session.dialogData.current = args.current || 0;
 
         const query = session.dialogData.queries[session.dialogData.current];
+        console.log('query jira: ', JSON.stringify(query));
 
         jira.searchIssues(query.project, query.criteria)
             .then((response) => {
@@ -103,7 +107,26 @@ lib.dialog('/query', [
                 next();
             })
             .catch((error) => {
-                query.results = `* Couldn't find anything cause of this error ${error.statusCode}`;
+                const {
+                    statusCode
+                } = error;
+
+                switch (statusCode) {
+                    case 400:
+                        query.results = `* Couldn't find anything on ${query.project.name}`;
+                        break;
+                    case 401:
+                        query.results = `Your JIRA credentials no longer working, ${goodname}. Just talk to IT Services about it.`;
+                        break;
+
+                    case 404:
+                        query.results = `Oops! ${query.project.name} doesn't exists or you don't have permission, ${goodname}.`;
+                        break;
+
+                    default:
+                        query.results = `* Couldn't find anything cause of this error ${error.statusCode}`;
+                        break;
+                }
                 next();
             });
     },
@@ -128,7 +151,7 @@ lib.dialog('/complete', [
             results
         } = args;
         const message = results.map((query) => {
-                return `${query.project.name}${'\n'}${query.results}${'\n'}`;
+                return `*${query.project.name}*${'\n'}${query.results}${'\n'}`;
             })
             .join('');
 
