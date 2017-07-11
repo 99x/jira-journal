@@ -9,7 +9,7 @@ module.exports = exports = {
 };
 
 // adds a new worklog under a particular issue key
-function addWorklog(jiraOptions, issueKey, worklog, callback) {
+function addWorklog(jiraOptions, issueKey, worklog) {
     const urlStub = `issue/${issueKey}/worklog`;
     const options = _getRequestOptions(jiraOptions, urlStub, worklog);
 
@@ -35,7 +35,7 @@ function getAssignedIssues(jiraOptions) {
 }
 
 // gets the issues that a particular user has recently logged time under sorted by date of update
-function getRecentIssues(jiraOptions, days, callback) {
+function getRecentIssues(jiraOptions, days) {
     const urlStub = `search?jql=worklogAuthor=${jiraOptions.username}
      AND worklogDate >= -${days}d ORDER BY updatedDate DESC&fields=summary`;
     const options = _getRequestOptions(jiraOptions, urlStub);
@@ -88,16 +88,5 @@ function _summarizeIssues(data) {
 
 // handles failure of HTTP requests
 function _handleFailure(error) {
-    const {
-        statusCode
-    } = error;
-    let message;
-
-    if (!statusCode) {
-        message = error.message;
-    } else {
-        message = `Failed with ${statusCode}`;
-    }
-
     return Promise.reject(error);
 }
