@@ -55,7 +55,7 @@ function getRecentIssues(jiraOptions, days, callback) {
 
 // search the issues that matches the project
 function searchIssues(jiraOptions, project, callback) {
-    const urlStub = `search?jql=project%20in%20(${project})%20ORDER%20BY%20updated%20DESC&fields=summary&maxResults=10`;
+    const urlStub = `search?jql=project%20in%20('${project}')%20ORDER%20BY%20updated%20DESC&fields=summary&maxResults=10`;
     const options = _getRequestOptions(jiraOptions, urlStub);
 
     return request.get(options)
