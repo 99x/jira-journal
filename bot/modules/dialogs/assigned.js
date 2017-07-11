@@ -4,28 +4,33 @@ const builder = require('botbuilder');
 const jira = require('../services/jira');
 
 const lib = new builder.Library('assigned');
-const maxTasks = 5;
+
+const TASKS_PER_BATCH = 5;
+const JIRA_OPTIONS = {
+    url: "https://myjira.atlassian.net",
+    username: "user",
+    password: "password"
+}
 
 lib.dialog("/", [
     (session) => {
-        session.beginDialog("fetchAssigned");
+        session.beginDialog("fetchAssigned", JIRA_OPTIONS);
     },
     (session, results) => {
         session.beginDialog("displayTasks", results.response);
+    },
+    (session, results) => {
+        session.endDialogWithResult(results);
     }
 ]);
 
 lib.dialog("fetchAssigned", [
-    (session) => {
-        const jiraOptions = {
-            url: "https://myjira.atlassian.net",
-            username: "user",
-            password: "password"
-        };
+    (session, args) => {
+        const jiraOptions = args;
 
         jira.getAssignedIssues(jiraOptions).then((response) => {
-            let tasks = response.map((t) => {
-                return `${t.key} - ${t.summary}`;
+            const tasks = response.map((t) => {
+                return `${t.key}: ${t.summary}`;
             });
 
             session.endDialogWithResult({ response: tasks });
@@ -39,13 +44,37 @@ lib.dialog("fetchAssigned", [
 
 lib.dialog("displayTasks", [
     (session, args) => {
-        if (args.length === 0) {
+        const tasks = args;
+
+        if (!tasks || tasks.length === 0) {
             session.endDialog("No tasks to show");
         }
+        else if (tasks.length <= TASKS_PER_BATCH) {
+            builder.Prompts.choice(session, "Select a task to proceed logging time:", tasks, builder.ListStyle.button);
+        }
+        else {
+            const batchOfTasks = tasks.splice(0, TASKS_PER_BATCH);
+            session.dialogData.remainingTasks = tasks;
 
-        session.send(args.join("\n"));
-        session.endDialog("That's all!");
-    }
+            batchOfTasks.push("More");
+            builder.Prompts.choice(session, "Select a task to proceed logging time:", batchOfTasks, builder.ListStyle.button);
+        }
+
+    },
+    (session, results) => {
+        if (results.response) {
+            const selection = results.response.entity;
+
+            if (selection.match(/^more$/i)) {
+                const tasks = session.dialogData.remainingTasks;
+                session.replaceDialog("displayTasks", tasks);
+            } else {
+                const projectKey = selection.substring(0, selection.indexOf(":"));
+                session.send(projectKey);
+                session.endDialogWithResult(results);
+            }
+        }
+    },
 ]);
 
 module.exports = exports = {
