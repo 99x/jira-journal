@@ -17,10 +17,20 @@ lib.dialog("/", [
         session.beginDialog("fetchAssigned", JIRA_OPTIONS);
     },
     (session, results) => {
-        session.beginDialog("displayTasks", results.response);
+        if (builder.ResumeReason[results.resumed] === "notCompleted") {
+            session.endDialog(results.response);
+        }
+        else {
+            session.beginDialog("displayTasks", results.response);
+        }
     },
     (session, results) => {
-        session.endDialogWithResult(results);
+        if (builder.ResumeReason[results.resumed] === "notCompleted") {
+            session.endDialog(results.response);
+        }
+        else {
+            session.endDialogWithResult(results);
+        }
     }
 ]);
 
@@ -35,7 +45,21 @@ lib.dialog("fetchAssigned", [
 
             session.endDialogWithResult({ response: tasks });
         }).catch((ex) => {
-            session.send(ex);
+            let message;
+
+            switch (ex.statusCode) {
+                case 401:
+                    message = "It seems like your credentials aren't correct or valid anymore";
+                    break;
+                default:
+                    message = "Something failed while fetching the assigned tasks";
+                    break;
+            }
+
+            session.endDialogWithResult({
+                response: message,
+                resumed: builder.ResumeReason.notCompleted
+            });
         });
 
         session.sendTyping();
@@ -47,7 +71,10 @@ lib.dialog("displayTasks", [
         const tasks = args;
 
         if (!tasks || tasks.length === 0) {
-            session.endDialog("No tasks to show");
+            session.endDialogWithResult({
+                response: "No tasks to show",
+                resumed: builder.ResumeReason.notCompleted
+            });
         }
         else if (tasks.length <= TASKS_PER_BATCH) {
             builder.Prompts.choice(session, "Select a task to proceed logging time:", tasks, builder.ListStyle.button);
@@ -67,15 +94,22 @@ lib.dialog("displayTasks", [
 
             if (selection.match(/^more$/i)) {
                 const tasks = session.dialogData.remainingTasks;
+
                 session.replaceDialog("displayTasks", tasks);
             } else {
                 const projectKey = selection.substring(0, selection.indexOf(":"));
                 session.send(projectKey);
-                session.endDialogWithResult(results);
+
+                session.endDialogWithResult({
+                    response: results,
+                    resumed: builder.ResumeReason.completed
+                });
             }
         }
-    },
-]);
+    }
+]).cancelAction("cancelDisplayTasks", "Okay, cancelling..", {
+    matches: /^cancel|nevermind/i
+});
 
 module.exports = exports = {
     createNew: () => {
