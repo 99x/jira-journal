@@ -70,6 +70,8 @@ lib.dialog('/prepare', [
     (session, results) => {
         const query = results.response;
 
+        session.sendTyping();
+
         const queries = session.userData.jira.map((instance) => {
             return {
                 criteria: query,
@@ -93,7 +95,8 @@ lib.dialog('/query', [
         session.dialogData.current = args.current || 0;
 
         const query = session.dialogData.queries[session.dialogData.current];
-        console.log('query jira: ', JSON.stringify(query));
+
+        session.sendTyping();
 
         jira.searchIssues(query.project, query.criteria)
             .then((response) => {
@@ -145,7 +148,7 @@ lib.dialog('/query', [
 lib.dialog('/complete', [
     (session, args) => {
 
-        console.log('complete args', JSON.stringify(args.results));
+        session.sendTyping();
 
         const {
             results
