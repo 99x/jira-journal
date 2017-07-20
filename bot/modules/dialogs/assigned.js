@@ -6,24 +6,18 @@ const jira = require('../services/jira');
 const lib = new builder.Library('assigned');
 
 const TASKS_PER_BATCH = 5;
-const JIRA_INSTANCES =
-    {
-        Corporate: {
-            url: "https://myjira.atlassian.net",
-            username: "user",
-            password: "password"
-        },
-        Client: {
-            url: "https://anotherjira.atlassian.net",
-            username: "user",
-            password: "password"
-        }
-    };
-
 
 lib.dialog("/", [
     (session) => {
-        session.beginDialog("selectJira", JIRA_INSTANCES);
+        session.beginDialog("ensureProfile");
+    },
+    (session, results) => {
+        if (builder.ResumeReason[results.resumed] === "completed") {
+            session.beginDialog("selectJira", results.response);
+        }
+        else {
+            session.endDialog(results.response);
+        }
     },
     (session, results) => {
         if (builder.ResumeReason[results.resumed] === "completed") {
@@ -52,6 +46,29 @@ lib.dialog("/", [
 ]).triggerAction({
     matches: ['/assigned']
 });
+
+lib.dialog("ensureProfile", [
+    (session) => {
+        const profileData = session.userData.profile;
+        let jiraData = session.userData.jira;
+
+        if (!profileData) {
+            return session.send("Looks like you aren't signed-in").replaceDialog('greet:/');
+        } else if (!jiraData || jiraData.length === 0) {
+            return session.send("Looks like you don't have any JIRA accounts").replaceDialog('greet:/');
+        }
+
+        jiraData = jiraData.reduce((map, instance) => {
+            map[instance.name] = instance;
+            return map;
+        }, {});
+
+        session.endDialogWithResult({
+            response: jiraData,
+            resumed: builder.ResumeReason.completed
+        });
+    }
+]);
 
 lib.dialog("selectJira", [
     (session, args) => {
