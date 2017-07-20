@@ -6,15 +6,32 @@ const jira = require('../services/jira');
 const lib = new builder.Library('assigned');
 
 const TASKS_PER_BATCH = 5;
-const JIRA_OPTIONS = {
-    url: "https://myjira.atlassian.net",
-    username: "user",
-    password: "password"
-}
+const JIRA_INSTANCES =
+    {
+        Corporate: {
+            url: "https://myjira.atlassian.net",
+            username: "user",
+            password: "password"
+        },
+        Client: {
+            url: "https://anotherjira.atlassian.net",
+            username: "user",
+            password: "password"
+        }
+    };
+
 
 lib.dialog("/", [
     (session) => {
-        session.beginDialog("fetchAssigned", JIRA_OPTIONS);
+        session.beginDialog("selectJira", JIRA_INSTANCES);
+    },
+    (session, results) => {
+        if (builder.ResumeReason[results.resumed] === "completed") {
+            session.beginDialog("fetchAssigned", results.response);
+        }
+        else {
+            session.endDialog(results.response);
+        }
     },
     (session, results) => {
         if (builder.ResumeReason[results.resumed] === "notCompleted") {
@@ -32,19 +49,63 @@ lib.dialog("/", [
             session.endDialogWithResult(results);
         }
     }
-]);
+]).triggerAction({
+    matches: ['/assigned']
+});
+
+lib.dialog("selectJira", [
+    (session, args) => {
+        const jiraInstances = args;
+        session.dialogData.jiraInstances = jiraInstances;
+
+        jiraInstances.All = {};
+
+        builder.Prompts.choice(session, "Which JIRA instance do you want to use?", jiraInstances, builder.ListStyle.button);
+    },
+    (session, results) => {
+        if (results.response) {
+            const selection = results.response.entity, jiraInstances = session.dialogData.jiraInstances;
+            let selectedInstances = [];
+
+            if (selection.match(/^all$/i)) {
+                selectedInstances = Object.keys(jiraInstances)
+                    .filter((key) => {
+                        return key !== "All"
+                    })
+                    .map((instanceName) => {
+                        return jiraInstances[instanceName];
+                    });
+            } else {
+                selectedInstances.push(jiraInstances[results.response.entity]);
+            }
+
+            session.endDialogWithResult({
+                response: selectedInstances,
+                resumed: builder.ResumeReason.completed
+            });
+        }
+    }
+]).cancelAction("cancelSelectJira", "Okay, cancelling..", {
+    matches: /^cancel|nevermind/i
+});
 
 lib.dialog("fetchAssigned", [
     (session, args) => {
-        const jiraOptions = args;
+        const selectedInstances = args;
 
-        jira.getAssignedIssues(jiraOptions).then((response) => {
-            const tasks = response.map((t) => {
-                return `${t.key}: ${t.summary}`;
+        const requests = selectedInstances.map((instance) => {
+            return jira.getAssignedIssues(instance);
+        });
+
+        Promise.all(requests).then(responses => {
+            const tasks = responses.reduce((tasks, response) => {
+                return tasks.concat(response);
+            }, []).map((task) => {
+                return `${task.key}: ${task.summary}`;
             });
 
             session.endDialogWithResult({ response: tasks });
-        }).catch((ex) => {
+        }).catch(ex => {
             let message;
 
             switch (ex.statusCode) {
