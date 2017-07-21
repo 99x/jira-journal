@@ -53,9 +53,9 @@ lib.dialog("ensureProfile", [
         let jiraData = session.userData.jira;
 
         if (!profileData) {
-            return session.send("Looks like you aren't signed-in").replaceDialog('greet:/');
+            session.send("Looks like you aren't signed-in").cancelDialog("assigned:/", "greet:/");
         } else if (!jiraData || jiraData.length === 0) {
-            return session.send("Looks like you don't have any JIRA accounts").replaceDialog('greet:/');
+            session.send("Looks like you don't have any JIRA accounts").cancelDialog("assigned:/", "greet:/");
         }
 
         jiraData = jiraData.reduce((map, instance) => {
