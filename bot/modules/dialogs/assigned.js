@@ -2,29 +2,36 @@
 
 const builder = require('botbuilder');
 const jira = require('../services/jira');
-
 const lib = new builder.Library('assigned');
-
 const TASKS_PER_BATCH = 5;
 
 lib.dialog("/", [
     (session) => {
         session.beginDialog("ensureProfile");
     },
-    (session, results) => {
-        if (builder.ResumeReason[results.resumed] === "completed") {
-            session.beginDialog("selectJira", results.response);
+    (session, results, next) => {
+        if (builder.ResumeReason[results.resumed] === "notCompleted") {
+            session.endDialog(results.response);
         }
         else {
-            session.endDialog(results.response);
+            const instanceCount = results.response.length;
+
+            if (instanceCount > 1) {
+                session.beginDialog("selectJira", results.response);
+            }
+            else {
+                session.dialogData.jiraInstance = results.response;
+                next();
+            }
         }
     },
     (session, results) => {
-        if (builder.ResumeReason[results.resumed] === "completed") {
-            session.beginDialog("fetchAssigned", results.response);
+        if (builder.ResumeReason[results.resumed] === "notCompleted") {
+            session.endDialog(results.response);
         }
         else {
-            session.endDialog(results.response);
+            const jiraInstance = results.response || session.dialogData.jiraInstance;
+            session.beginDialog("fetchAssigned", jiraInstance);
         }
     },
     (session, results) => {
@@ -49,40 +56,34 @@ lib.dialog("/", [
 
 lib.dialog("ensureProfile", [
     (session) => {
-        const profileData = session.userData.profile;
-        let jiraData = session.userData.jira;
+        const { profile, jira } = session.userData;
 
-        if (!profileData) {
-            session.send("Looks like you aren't signed-in").cancelDialog("assigned:/", "greet:/");
-        } else if (!jiraData || jiraData.length === 0) {
-            session.send("Looks like you don't have any JIRA accounts").cancelDialog("assigned:/", "greet:/");
+        if (!profile) {
+            session.send("Looks like you aren't signed-in. Sending you back..").cancelDialog("assigned:/", "greet:/");
+        } else if (!jira || jira.length === 0) {
+            session.send("Looks like you don't have any JIRA accounts registered. Sending you back..").cancelDialog("assigned:/", "greet:/");
         }
 
-        jiraData = jiraData.reduce((map, instance) => {
-            map[instance.name] = instance;
-            return map;
-        }, {});
-
-        session.endDialogWithResult({
-            response: jiraData,
-            resumed: builder.ResumeReason.completed
-        });
+        session.endDialogWithResult({ response: jira });
     }
 ]);
 
 lib.dialog("selectJira", [
     (session, args) => {
-        const jiraInstances = args;
-        session.dialogData.jiraInstances = jiraInstances;
+        const jiraInstances = args.reduce((map, instance) => {
+            map[instance.name] = instance;
+            return map;
+        }, {});
 
+        session.dialogData.jiraInstances = jiraInstances;
         jiraInstances.All = {};
 
         builder.Prompts.choice(session, "Which JIRA instance do you want to use?", jiraInstances, builder.ListStyle.button);
     },
     (session, results) => {
         if (results.response) {
-            const selection = results.response.entity, jiraInstances = session.dialogData.jiraInstances;
-            let selectedInstances = [];
+            const selection = results.response.entity, { jiraInstances } = session.dialogData;
+            let selectedInstances;
 
             if (selection.match(/^all$/i)) {
                 selectedInstances = Object.keys(jiraInstances)
@@ -93,16 +94,13 @@ lib.dialog("selectJira", [
                         return jiraInstances[instanceName];
                     });
             } else {
-                selectedInstances.push(jiraInstances[results.response.entity]);
+                selectedInstances.push(jiraInstances[selection]);
             }
 
-            session.endDialogWithResult({
-                response: selectedInstances,
-                resumed: builder.ResumeReason.completed
-            });
+            session.endDialogWithResult({ response: selectedInstances });
         }
     }
-]).cancelAction("cancelSelectJira", "Okay, cancelling..", {
+]).cancelAction("cancelSelectJira", "Okay, taking you back..", {
     matches: /^cancel|nevermind/i
 });
 
@@ -171,9 +169,9 @@ lib.dialog("displayTasks", [
             const selection = results.response.entity;
 
             if (selection.match(/^more$/i)) {
-                const tasks = session.dialogData.remainingTasks;
+                const { remainingTasks } = session.dialogData;
 
-                session.replaceDialog("displayTasks", tasks);
+                session.replaceDialog("displayTasks", remainingTasks);
             } else {
                 const projectKey = selection.substring(0, selection.indexOf(":"));
                 session.send(projectKey);
@@ -185,7 +183,7 @@ lib.dialog("displayTasks", [
             }
         }
     }
-]).cancelAction("cancelDisplayTasks", "Okay, cancelling..", {
+]).cancelAction("cancelDisplayTasks", "Okay, taking you back..", {
     matches: /^cancel|nevermind/i
 });
 
