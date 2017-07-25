@@ -86,6 +86,8 @@ lib.dialog("selectJira", [
             let selectedInstances;
 
             if (selection.match(/^all$/i)) {
+                // show tasks from all instances
+
                 selectedInstances = Object.keys(jiraInstances)
                     .filter((key) => {
                         return key !== "All"
@@ -94,6 +96,8 @@ lib.dialog("selectJira", [
                         return jiraInstances[instanceName];
                     });
             } else {
+                // one selection
+
                 selectedInstances.push(jiraInstances[selection]);
             }
 
@@ -156,6 +160,8 @@ lib.dialog("displayTasks", [
             builder.Prompts.choice(session, "Select a task to proceed logging time:", tasks, builder.ListStyle.button);
         }
         else {
+            // page through tasks
+
             const batchOfTasks = tasks.splice(0, TASKS_PER_BATCH);
             session.dialogData.remainingTasks = tasks;
 
@@ -169,8 +175,9 @@ lib.dialog("displayTasks", [
             const selection = results.response.entity;
 
             if (selection.match(/^more$/i)) {
-                const { remainingTasks } = session.dialogData;
+                // repeat again for the rest
 
+                const { remainingTasks } = session.dialogData;
                 session.replaceDialog("displayTasks", remainingTasks);
             } else {
                 const projectKey = selection.substring(0, selection.indexOf(":"));
