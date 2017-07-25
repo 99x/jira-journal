@@ -59,9 +59,9 @@ lib.dialog("ensureProfile", [
         const { profile, jira } = session.userData;
 
         if (!profile) {
-            session.send("Looks like you aren't signed-in. Sending you back..").cancelDialog("assigned:/", "greet:/");
+            session.send("not_signed_in").cancelDialog("assigned:/", "greet:/");
         } else if (!jira || jira.length === 0) {
-            session.send("Looks like you don't have any JIRA accounts registered. Sending you back..").cancelDialog("assigned:/", "greet:/");
+            session.send("no_jira_accounts").cancelDialog("assigned:/", "greet:/");
         }
 
         session.endDialogWithResult({ response: jira });
@@ -78,7 +78,7 @@ lib.dialog("selectJira", [
         session.dialogData.jiraInstances = jiraInstances;
         jiraInstances.All = {};
 
-        builder.Prompts.choice(session, "Which JIRA instance do you want to use?", jiraInstances, builder.ListStyle.button);
+        builder.Prompts.choice(session, "jira_selection", jiraInstances, builder.ListStyle.button);
     },
     (session, results) => {
         if (results.response) {
@@ -104,7 +104,7 @@ lib.dialog("selectJira", [
             session.endDialogWithResult({ response: selectedInstances });
         }
     }
-]).cancelAction("cancelSelectJira", "Okay, taking you back..", {
+]).cancelAction("cancelSelectJira", "exit_dialog", {
     matches: /^cancel|nevermind/i
 });
 
@@ -125,19 +125,19 @@ lib.dialog("fetchAssigned", [
 
             session.endDialogWithResult({ response: tasks });
         }).catch(ex => {
-            let message;
+            let response;
 
             switch (ex.statusCode) {
                 case 401:
-                    message = "It seems like your credentials aren't correct or valid anymore";
+                    response = session.localizer.gettext(session.preferredLocale(), "auth_failure");
                     break;
                 default:
-                    message = "Something failed while fetching the assigned tasks";
+                    response = session.localizer.gettext(session.preferredLocale(), "request_failure");
                     break;
             }
 
             session.endDialogWithResult({
-                response: message,
+                response,
                 resumed: builder.ResumeReason.notCompleted
             });
         });
@@ -151,13 +151,15 @@ lib.dialog("displayTasks", [
         const tasks = args;
 
         if (!tasks || tasks.length === 0) {
+            const response = session.localizer.gettext(session.preferredLocale(), "no_assigned_tasks");
+
             session.endDialogWithResult({
-                response: "No tasks to show",
+                response,
                 resumed: builder.ResumeReason.notCompleted
             });
         }
         else if (tasks.length <= TASKS_PER_BATCH) {
-            builder.Prompts.choice(session, "Select a task to proceed logging time:", tasks, builder.ListStyle.button);
+            builder.Prompts.choice(session, "task_selection", tasks, builder.ListStyle.button);
         }
         else {
             // page through tasks
@@ -166,7 +168,7 @@ lib.dialog("displayTasks", [
             session.dialogData.remainingTasks = tasks;
 
             batchOfTasks.push("More");
-            builder.Prompts.choice(session, "Select a task to proceed logging time:", batchOfTasks, builder.ListStyle.button);
+            builder.Prompts.choice(session, "task_selection", batchOfTasks, builder.ListStyle.button);
         }
 
     },
@@ -190,7 +192,7 @@ lib.dialog("displayTasks", [
             }
         }
     }
-]).cancelAction("cancelDisplayTasks", "Okay, taking you back..", {
+]).cancelAction("cancelDisplayTasks", "exit_dialog", {
     matches: /^cancel|nevermind/i
 });
 
