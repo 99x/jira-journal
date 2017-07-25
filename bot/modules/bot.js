@@ -24,6 +24,10 @@ const bot = new builder.UniversalBot(connector, (session) => {
     session.endDialog();
 });
 
+bot.set('localizerSettings', {
+    defaultLocale: 'en'
+});
+
 bot.set('persistConversationData', true);
 
 bot.recognizer(recognizer.luis);
