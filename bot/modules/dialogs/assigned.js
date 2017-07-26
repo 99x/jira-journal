@@ -39,7 +39,11 @@ lib.dialog("/", [
             session.endDialog(results.response);
         }
         else {
-            session.beginDialog("displayTasks", results.response);
+            const args = {
+                tasks: results.response
+            };
+
+            session.beginDialog("displayTasks", args);
         }
     },
     (session, results) => {
@@ -148,7 +152,8 @@ lib.dialog("fetchAssigned", [
 
 lib.dialog("displayTasks", [
     (session, args) => {
-        const tasks = args;
+        const { tasks, repeat } = args;
+        const promptMessage = (repeat) ? "further_task_selection" : "task_selection";
 
         if (!tasks || tasks.length === 0) {
             const response = session.localizer.gettext(session.preferredLocale(), "no_assigned_tasks");
@@ -159,16 +164,18 @@ lib.dialog("displayTasks", [
             });
         }
         else if (tasks.length <= TASKS_PER_BATCH) {
-            builder.Prompts.choice(session, "task_selection", tasks, builder.ListStyle.button);
+            // only or last batch of tasks
+
+            builder.Prompts.choice(session, promptMessage, tasks, builder.ListStyle.button);
         }
         else {
-            // page through tasks
+            // handle as a batch of tasks
 
             const batchOfTasks = tasks.splice(0, TASKS_PER_BATCH);
             session.dialogData.remainingTasks = tasks;
 
             batchOfTasks.push("More");
-            builder.Prompts.choice(session, "task_selection", batchOfTasks, builder.ListStyle.button);
+            builder.Prompts.choice(session, promptMessage, batchOfTasks, builder.ListStyle.button);
         }
 
     },
@@ -179,8 +186,12 @@ lib.dialog("displayTasks", [
             if (selection.match(/^more$/i)) {
                 // repeat again for the rest
 
-                const { remainingTasks } = session.dialogData;
-                session.replaceDialog("displayTasks", remainingTasks);
+                const args = {
+                    repeat: true,
+                    tasks: session.dialogData.remainingTasks
+                };
+
+                session.replaceDialog("displayTasks", args);
             } else {
                 const projectKey = selection.substring(0, selection.indexOf(":"));
                 session.send(projectKey);

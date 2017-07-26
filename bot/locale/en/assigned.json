@@ -40,8 +40,8 @@
         "These are the tasks assigned to you. Select a task to proceed logging time"
     ],
     "further_task_selection": [
-        "Here's some more tasks",
-        "Some more",
+        "Here's some more",
+        "Found some more",
         "There's more"
     ]
 }
