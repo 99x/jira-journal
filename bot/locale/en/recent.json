@@ -1,0 +1,47 @@
+{
+    "exit_dialog": [
+        "Okay! Taking you back..",
+        "Right! Sending you back..",
+        "Got it! I'm taking you back.."
+    ],
+    "not_signed_in": [
+        "Looks like you aren't signed-in. Sending you back..",
+        "You aren't signed-in yet. Taking you back..",
+        "I can see that you aren't signed-in yet. Sending you back.."
+    ],
+    "auth_failure": [
+        "It seems like your JIRA credentials aren't correct or valid anymore",
+        "Your JIRA credentials didn't work",
+        "I couldn't access your JIRA using the given credentials"
+    ],
+    "request_failure": [
+        "Something failed while finding your recent tasks",
+        "Something went wrong while fetching your recent tasks",
+        "That failed. I couldn't get your recent tasks"
+    ],
+    "no_jira_accounts": [
+        "Looks like you don't have any JIRA accounts registered. Sending you back..",
+        "No JIRA accounts are associated with you. Sending you back..",
+        "I didn't find any JIRA accounts for you. Taking you back.."
+    ],
+    "jira_selection": [
+        "Which JIRA account do you want to use?",
+        "Found these JIRA accounts. Which one to use?",
+        "I found these JIRA accounts. Which one do you want to use?"
+    ],
+    "no_recent_tasks": [
+        "No recent tasks found!",
+        "Nothing found!",
+        "I didn't find anything for you!"
+    ],
+    "task_selection": [
+        "Here's what I found. Select a task to log time",
+        "This is what I got back. Select a task to log some time",
+        "These are your recent tasks. Select a task to proceed logging time"
+    ],
+    "further_task_selection": [
+        "Here's some more",
+        "Found some more",
+        "There's more"
+    ]
+}
