@@ -5,6 +5,7 @@ const builder = require('botbuilder');
 const logger = require('./middleware/logger');
 const recognizer = require('./middleware/recognizer');
 
+const fetch = require('./dialogs/fetch');
 const assigned = require('./dialogs/assigned');
 const recent = require('./dialogs/recent');
 const worklog = require('./dialogs/worklog');
@@ -32,6 +33,7 @@ bot.set('persistConversationData', true);
 
 bot.recognizer(recognizer.luis);
 
+bot.library(fetch.createNew());
 bot.library(assigned.createNew());
 bot.library(recent.createNew());
 bot.library(worklog.createNew());

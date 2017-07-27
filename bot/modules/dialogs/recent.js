@@ -3,12 +3,12 @@
 const builder = require('botbuilder');
 const jira = require('../services/jira');
 const lib = new builder.Library('recent');
-const TASKS_PER_BATCH = 5;
+
 const NO_OF_DAYS = 7;
 
 lib.dialog("/", [
     (session) => {
-        session.beginDialog("ensureProfile");
+        session.beginDialog("fetch:ensureProfile");
     },
     (session, results, next) => {
         if (builder.ResumeReason[results.resumed] === "notCompleted") {
@@ -18,7 +18,7 @@ lib.dialog("/", [
             const instanceCount = results.response.length;
 
             if (instanceCount > 1) {
-                session.beginDialog("selectJira", results.response);
+                session.beginDialog("fetch:selectJira", results.response);
             }
             else {
                 session.dialogData.jiraInstance = results.response;
@@ -31,8 +31,14 @@ lib.dialog("/", [
             session.endDialog(results.response);
         }
         else {
-            const jiraInstance = results.response || session.dialogData.jiraInstance;
-            session.beginDialog("fetchRecent", jiraInstance);
+            const instances = results.response || session.dialogData.jiraInstance;
+            const args = {
+                instances,
+                operation: jira.getRecentIssues,
+                param: NO_OF_DAYS
+            };
+
+            session.beginDialog("fetch:retrieveTasks", args);
         }
     },
     (session, results) => {
@@ -44,7 +50,7 @@ lib.dialog("/", [
                 tasks: results.response
             };
 
-            session.beginDialog("displayTasks", args);
+            session.beginDialog("fetch:displayTasks", args);
         }
     },
     (session, results) => {
@@ -57,155 +63,6 @@ lib.dialog("/", [
     }
 ]).triggerAction({
     matches: ['/recent']
-});
-
-lib.dialog("ensureProfile", [
-    (session) => {
-        const { profile, jira } = session.userData;
-
-        if (!profile) {
-            session.send("not_signed_in").cancelDialog("recent:/", "greet:/");
-        } else if (!jira || jira.length === 0) {
-            session.send("no_jira_accounts").cancelDialog("recent:/", "greet:/");
-        }
-
-        session.endDialogWithResult({ response: jira });
-    }
-]);
-
-lib.dialog("selectJira", [
-    (session, args) => {
-        const jiraInstances = args.reduce((map, instance) => {
-            map[instance.name] = instance;
-            return map;
-        }, {});
-
-        session.dialogData.jiraInstances = jiraInstances;
-        jiraInstances.All = {};
-
-        builder.Prompts.choice(session, "jira_selection", jiraInstances, builder.ListStyle.button);
-    },
-    (session, results) => {
-        if (results.response) {
-            const selection = results.response.entity, { jiraInstances } = session.dialogData;
-            let selectedInstances;
-
-            if (selection.match(/^all$/i)) {
-                // show tasks from all instances
-
-                selectedInstances = Object.keys(jiraInstances)
-                    .filter((key) => {
-                        return key !== "All"
-                    })
-                    .map((instanceName) => {
-                        return jiraInstances[instanceName];
-                    });
-            } else {
-                // one selection
-
-                selectedInstances.push(jiraInstances[selection]);
-            }
-
-            session.endDialogWithResult({ response: selectedInstances });
-        }
-    }
-]).cancelAction("cancelSelectJira", "exit_dialog", {
-    matches: /^cancel|nevermind/i
-});
-
-lib.dialog("fetchRecent", [
-    (session, args) => {
-        const selectedInstances = args;
-
-        const requests = selectedInstances.map((instance) => {
-            return jira.getRecentIssues(instance, NO_OF_DAYS);
-        });
-
-        Promise.all(requests).then(responses => {
-            const tasks = responses.reduce((tasks, response) => {
-                return tasks.concat(response);
-            }, []).map((task) => {
-                return `${task.key}: ${task.summary}`;
-            });
-
-            session.endDialogWithResult({ response: tasks });
-        }).catch(ex => {
-            let response;
-
-            switch (ex.statusCode) {
-                case 401:
-                    response = session.localizer.gettext(session.preferredLocale(), "auth_failure");
-                    break;
-                default:
-                    response = session.localizer.gettext(session.preferredLocale(), "request_failure");
-                    break;
-            }
-
-            session.endDialogWithResult({
-                response,
-                resumed: builder.ResumeReason.notCompleted
-            });
-        });
-
-        session.sendTyping();
-    }
-]);
-
-lib.dialog("displayTasks", [
-    (session, args) => {
-        const { tasks, repeat } = args;
-        const promptMessage = (repeat) ? "further_task_selection" : "task_selection";
-
-        if (!tasks || tasks.length === 0) {
-            const response = session.localizer.gettext(session.preferredLocale(), "no_recent_tasks");
-
-            session.endDialogWithResult({
-                response,
-                resumed: builder.ResumeReason.notCompleted
-            });
-        }
-        else if (tasks.length <= TASKS_PER_BATCH) {
-            // only or last batch of tasks
-
-            builder.Prompts.choice(session, promptMessage, tasks, builder.ListStyle.button);
-        }
-        else {
-            // handle as a batch of tasks
-
-            const batchOfTasks = tasks.splice(0, TASKS_PER_BATCH);
-            session.dialogData.remainingTasks = tasks;
-
-            batchOfTasks.push("More");
-            builder.Prompts.choice(session, promptMessage, batchOfTasks, builder.ListStyle.button);
-        }
-
-    },
-    (session, results) => {
-        if (results.response) {
-            const selection = results.response.entity;
-
-            if (selection.match(/^more$/i)) {
-                // repeat again for the rest
-
-                const args = {
-                    repeat: true,
-                    tasks: session.dialogData.remainingTasks
-                };
-
-                session.replaceDialog("displayTasks", args);
-            } else {
-                const projectKey = selection.substring(0, selection.indexOf(":"));
-                session.send(projectKey);
-
-                session.endDialogWithResult({
-                    response: results,
-                    resumed: builder.ResumeReason.completed
-                });
-            }
-        }
-    }
-]).cancelAction("cancelDisplayTasks", "exit_dialog", {
-    matches: /^cancel|nevermind/i
 });
 
 module.exports = exports = {
