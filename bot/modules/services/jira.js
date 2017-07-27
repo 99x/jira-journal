@@ -35,7 +35,7 @@ function getAssignedIssues(jiraOptions) {
 }
 
 // gets the issues that a particular user has recently logged time under sorted by date of update
-function getRecentIssues(jiraOptions, days) {
+function getRecentIssues(jiraOptions, days = 7) {
     const urlStub = `search?jql=worklogAuthor=${jiraOptions.username}
      AND worklogDate >= -${days}d ORDER BY updatedDate DESC&fields=summary`;
     const options = _getRequestOptions(jiraOptions, urlStub);
